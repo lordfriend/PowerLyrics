@@ -1,4 +1,4 @@
-package io.nya.powerlyrics.powerlyrics;
+package io.nya.powerlyrics;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        assertEquals("io.nya.powerlyrics.powerlyrics", appContext.getPackageName());
+        assertEquals("io.nya.powerlyrics", appContext.getPackageName());
     }
 }

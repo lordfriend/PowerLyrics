@@ -1,4 +1,4 @@
-package io.nya.powerlyrics.powerlyrics;
+package io.nya.powerlyrics;
 
 import org.junit.Test;
 
