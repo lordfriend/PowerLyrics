@@ -1,0 +1,51 @@
+{
+  "result": {
+    "songs": [{
+      "id": 29724906,
+      "name": "sweet treasure",
+      "artists": [{
+        "id": 21138,
+        "name": "V.A.",
+        "picUrl": null,
+        "alias": [],
+        "albumSize": 0,
+        "picId": 0,
+        "img1v1Url": "http://p4.music.126.net/VnZiScyynLG7atLIZ2YPkw==/18686200114669622.jpg",
+        "img1v1": 18686200114669622,
+        "trans": null
+      }],
+      "album": {
+        "id": 3056446,
+        "name": "sweet treasure",
+        "artist": {
+          "id": 0,
+          "name": "",
+          "picUrl": null,
+          "alias": [],
+          "albumSize": 0,
+          "picId": 0,
+          "img1v1Url": "http://p3.music.126.net/VnZiScyynLG7atLIZ2YPkw==/18686200114669622.jpg",
+          "img1v1": 18686200114669622,
+          "trans": null
+        },
+        "publishTime": 1412870400000,
+        "size": 3,
+        "copyrightId": 0,
+        "status": 0,
+        "alias": ["サノバウィッチ キャラクターソング Vol.1 綾地寧々"],
+        "picId": 3244658814290157
+      },
+      "duration": 273266,
+      "copyrightId": 0,
+      "status": -1,
+      "alias": [],
+      "rtype": 0,
+      "ftype": 0,
+      "mvid": 0,
+      "fee": 0,
+      "rUrl": null
+    }],
+    "songCount": 9999
+  },
+  "code": 200
+}

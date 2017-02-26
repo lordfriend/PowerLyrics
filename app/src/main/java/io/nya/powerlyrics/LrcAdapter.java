@@ -1,6 +1,7 @@
 package io.nya.powerlyrics;
 
 import android.content.Context;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -41,17 +42,20 @@ public class LrcAdapter extends BaseAdapter {
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
         if (view == null) {
-            view = makeTextLine();
+            LayoutInflater inflater = LayoutInflater.from(mContext);
+            view = inflater.inflate(R.layout.lyric_item, null);
         }
         LyricEntry lrcItem = mLyric.get(i);
-        ((TextView) view).setText(lrcItem.lyric);
+        TextView textView = (TextView) view.findViewById(R.id.lyric_text);
+        textView.setText(i + "  " + lrcItem.lyric);
         return view;
     }
 
-    private TextView makeTextLine() {
-        TextView view = new TextView(mContext);
-        view.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        view.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-        return view;
-    }
+//    private TextView makeTextLine() {
+//        TextView view = new TextView(mContext);
+//        view.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+//        view.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+////        view.setTextAlignment()
+//        return view;
+//    }
 }

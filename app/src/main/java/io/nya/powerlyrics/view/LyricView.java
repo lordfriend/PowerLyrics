@@ -4,6 +4,8 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
@@ -33,6 +35,8 @@ public class LyricView extends ListView implements AbsListView.OnScrollListener 
     private Paint mIndicatorPaint = null;
     private long mDuration = 0;
 
+    private Drawable mDividerDrawable;
+
     public LyricView(Context context) {
         super(context);
         init(context);
@@ -56,6 +60,8 @@ public class LyricView extends ListView implements AbsListView.OnScrollListener 
         setFriction(friction);
         setClipToPadding(false);
         setOnScrollListener(this);
+        mDividerDrawable = new ColorDrawable(Color.TRANSPARENT);
+//        setDivider(mDividerDrawable);
     }
 
     @Override
