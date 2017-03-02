@@ -8,9 +8,9 @@
     <!-- The primary full-screen view. This can be replaced with whatever view
          is needed to present your content, e.g. VideoView, SurfaceView,
          TextureView, etc. -->
-    <io.nya.powerlyrics.view.LyricView
-        android:id="@+id/lyric_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"></io.nya.powerlyrics.view.LyricView>
+    <!--<io.nya.powerlyrics.view.LyricView-->
+        <!--android:id="@+id/lyric_view"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="match_parent"></io.nya.powerlyrics.view.LyricView>-->
 
 </FrameLayout>

@@ -14,16 +14,15 @@ import android.widget.AbsListView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 
-import io.nya.powerlyrics.lyric.Lyric;
 import io.nya.powerlyrics.lyric.LyricEntry;
 
 /**
  * Created by nene on 2/25/17.
  */
 
-public class LyricView extends ListView implements AbsListView.OnScrollListener {
+public class _LyricView extends ListView implements AbsListView.OnScrollListener {
 
-    private final static String LOG_TAG = LyricView.class.getName();
+    private final static String LOG_TAG = _LyricView.class.getName();
 
     public int mMiddleX = 0;
 
@@ -37,17 +36,17 @@ public class LyricView extends ListView implements AbsListView.OnScrollListener 
 
     private Drawable mDividerDrawable;
 
-    public LyricView(Context context) {
+    public _LyricView(Context context) {
         super(context);
         init(context);
     }
 
-    public LyricView(Context context, AttributeSet attrs) {
+    public _LyricView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init(context);
     }
 
-    public LyricView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public _LyricView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(context);
     }
