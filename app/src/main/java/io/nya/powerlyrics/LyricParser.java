@@ -76,6 +76,7 @@ public class LyricParser {
             }
         }
         lyric.sort();
+        lyric.calculateEntryDuration();
         return lyric;
     }
 }

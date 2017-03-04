@@ -5,17 +5,18 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 
 /**
  * A class represent for entire lyric file including the id tags
  */
 
-public class Lyric {
+public class Lyric implements Iterable<LyricEntry> {
 
-    private HashMap<String, String> idTags = new HashMap<String, String>();
-    private ArrayList<LyricEntry> lyricList = new ArrayList<LyricEntry>();
+    private boolean isSorted = false;
 
-//    SortedMap
+    private HashMap<String, String> idTags = new HashMap<>();
+    private ArrayList<LyricEntry> lyricList = new ArrayList<>();
 
     public LyricEntry get(int position) {
         return lyricList.get(position);
@@ -43,6 +44,24 @@ public class Lyric {
 
     public void sort() {
         Collections.sort(lyricList);
+    }
+
+    public void calculateEntryDuration() {
+        if(!isSorted) {
+            sort();
+        }
+        LyricEntry lastEntry = null;
+        for (LyricEntry entry: lyricList) {
+            if(lastEntry != null) {
+                lastEntry.duration = entry.timestamp - lastEntry.timestamp;
+            }
+            lastEntry = entry;
+        }
+    }
+
+    @Override
+    public Iterator<LyricEntry> iterator() {
+        return lyricList.iterator();
     }
 
 }

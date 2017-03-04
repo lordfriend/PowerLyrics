@@ -7,6 +7,7 @@ package io.nya.powerlyrics.lyric;
 public class LyricEntry implements Comparable {
     public Long timestamp;
     public String lyric;
+    public Long duration;
 
     public LyricEntry() {
     }
