@@ -18,7 +18,6 @@ public class LyricsActivity extends Activity {
     private final static String LOG_TAG = LyricsActivity.class.getName();
 
     _LyricView mListView;
-    LrcAdapter mAdapter;
     Handler mHandler = new Handler();
 
     Runnable mTimer =  new Runnable() {
@@ -43,7 +42,6 @@ public class LyricsActivity extends Activity {
 
 //        mListView = (LyricView) findViewById(R.id.lyric_view);
 //        mLyricLinear = (LinearLayout) findViewById(R.id.lyric_linear);
-//        Adapter adapter = new LrcAdapter();
 //        String[] values = new String[] { "Android", "iPhone", "WindowsMobile",
 //                "Blackberry", "WebOS", "Ubuntu", "Windows7", "Max OS X",
 //                "Linux", "OS/2", "Ubuntu", "Windows7", "Max OS X", "Linux",
@@ -68,7 +66,6 @@ public class LyricsActivity extends Activity {
 //                    SearchResult result = cloud.searchMusic("Sweet Treasure");
 //                    String lyricStr = cloud.getLyric(result.songs[0].id).lrc.lyric;
 //                    Lyric lyric = LyricParser.parse(lyricStr);
-//                    mAdapter = new LrcAdapter(LyricsActivity.this.getApplicationContext(), lyric);
 //                    mHandler.post(mSetLyric);
 //                } catch (IOException e) {
 //                    e.printStackTrace();

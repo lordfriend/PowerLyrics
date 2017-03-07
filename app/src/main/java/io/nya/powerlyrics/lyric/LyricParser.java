@@ -1,4 +1,4 @@
-package io.nya.powerlyrics;
+package io.nya.powerlyrics.lyric;
 
 import android.util.Log;
 
@@ -8,9 +8,6 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import io.nya.powerlyrics.lyric.Lyric;
-import io.nya.powerlyrics.lyric.LyricEntry;
 
 /**
  * Parse Lyric Text String to Lyric Object

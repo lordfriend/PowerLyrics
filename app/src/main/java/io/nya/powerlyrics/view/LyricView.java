@@ -17,7 +17,7 @@ import io.nya.powerlyrics.lyric.Lyric;
 import io.nya.powerlyrics.lyric.LyricEntry;
 
 /**
- * Created by nene on 3/4/17.
+ * A lyric view to show lyric with auto scroll and highlight current playing lyric text
  */
 
 public class LyricView extends View {
@@ -166,11 +166,7 @@ public class LyricView extends View {
         mMiddleY = MeasureSpec.getSize(heightMeasureSpec) / 2;
         if (mLyric != null) {
             for (LyricEntry entry: mLyric) {
-                if (mCurrentPosition != INVALID_POSITION) {
-                    mLayoutList.add(new StaticLayout(entry.lyric, mDefaultPaint, containerWidth, StaticLayout.Alignment.ALIGN_CENTER, 1f, 1.5f, true));
-                } else {
-                    mLayoutList.add(new StaticLayout(entry.lyric, mHighlighPaint, containerWidth, StaticLayout.Alignment.ALIGN_CENTER, 1f, 1.5f, true));
-                }
+                mLayoutList.add(new StaticLayout(entry.lyric, mDefaultPaint, containerWidth, StaticLayout.Alignment.ALIGN_CENTER, 1f, 1.5f, true));
             }
         }
     }
@@ -179,11 +175,11 @@ public class LyricView extends View {
 
         private Scroller mScroller;
 
-        public SmoothScrollRunnable() {
+        SmoothScrollRunnable() {
             mScroller = new Scroller(getContext());
         }
 
-        public void startScroll(int distance) {
+        void startScroll(int distance) {
             mScroller.abortAnimation();
             mScroller.startScroll(0, 0, 0, distance);
             postOnAnimation(this);
