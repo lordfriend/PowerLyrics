@@ -1,6 +1,7 @@
 package io.nya.powerlyrics;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -15,17 +16,31 @@ public class LyricsActivity extends Activity implements RemoteTrackTime.TrackTim
 
     RemoteTrackTime mRemoteTrackTime;
 
+    private void handleIntent(Intent intent) {
+        String action = intent.getAction();
+        if (PlayService.ACTION_LYRIC_FOUND.equals(action)) {
+            // TODO: we need do something open from notification
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.activity_lyrics);
+
+        handleIntent(getIntent());
 
         mRemoteTrackTime = new RemoteTrackTime(this);
         PlayService service = PlayService.getInstance();
         if (service != null) {
             Log.d(LOG_TAG, "activity: " + service.mCurrentTrack.title);
         }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        handleIntent(intent);
     }
 
     @Override
