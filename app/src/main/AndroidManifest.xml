@@ -24,9 +24,26 @@
         <activity android:name=".LyricChooserActivy" />
 
         <service
-            android:name=".service.MyService"
+            android:name=".service.PlayService"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="true" />
+
+        <receiver
+            android:name=".OnTrackChange"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.maxmpz.audioplayer.TRACK_CHANGED" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".onStatusChange"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.maxmpz.audioplayer.STATUS_CHANGED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

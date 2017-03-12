@@ -2,37 +2,18 @@ package io.nya.powerlyrics;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.os.Handler;
-import android.widget.LinearLayout;
+import android.util.Log;
 
-import java.io.IOException;
+import com.maxmpz.poweramp.player.RemoteTrackTime;
 
-import io.nya.powerlyrics.lyric.Lyric;
-import io.nya.powerlyrics.model.SearchResult;
-import io.nya.powerlyrics.service.NeteaseCloud;
-import io.nya.powerlyrics.view._LyricView;
+import io.nya.powerlyrics.service.PlayService;
 
 
-public class LyricsActivity extends Activity {
+public class LyricsActivity extends Activity implements RemoteTrackTime.TrackTimeListener {
 
     private final static String LOG_TAG = LyricsActivity.class.getName();
 
-    _LyricView mListView;
-    Handler mHandler = new Handler();
-
-    Runnable mTimer =  new Runnable() {
-        @Override
-        public void run() {
-            mListView.smoothScrollToPositionMiddle(14);
-        }
-    };
-
-    Runnable mSetLyric = new Runnable() {
-        @Override
-        public void run() {
-//            mListView.setAdapter(mAdapter);
-        }
-    };
+    RemoteTrackTime mRemoteTrackTime;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,38 +21,11 @@ public class LyricsActivity extends Activity {
 
         setContentView(R.layout.activity_lyrics);
 
-//        mListView = (LyricView) findViewById(R.id.lyric_view);
-//        mLyricLinear = (LinearLayout) findViewById(R.id.lyric_linear);
-//        String[] values = new String[] { "Android", "iPhone", "WindowsMobile",
-//                "Blackberry", "WebOS", "Ubuntu", "Windows7", "Max OS X",
-//                "Linux", "OS/2", "Ubuntu", "Windows7", "Max OS X", "Linux",
-//                "OS/2", "Ubuntu", "Windows7", "Max OS X", "Linux", "OS/2",
-//                "Android", "iPhone", "WindowsMobile" };
-//
-//        final ArrayList<String> list = new ArrayList<String>();
-//        for (int i = 0; i < values.length; ++i) {
-//            list.add(i + " " + values[i]);
-//        }
-//        final ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-//                android.R.layout.simple_list_item_1, list);
-//        mListView.setAdapter(adapter);
-
-//        mHandler.postDelayed(mTimer, 5000);
-
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                try {
-//                    NeteaseCloud cloud = new NeteaseCloud();
-//                    SearchResult result = cloud.searchMusic("Sweet Treasure");
-//                    String lyricStr = cloud.getLyric(result.songs[0].id).lrc.lyric;
-//                    Lyric lyric = LyricParser.parse(lyricStr);
-//                    mHandler.post(mSetLyric);
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        }).start();
+        mRemoteTrackTime = new RemoteTrackTime(this);
+        PlayService service = PlayService.getInstance();
+        if (service != null) {
+            Log.d(LOG_TAG, "activity: " + service.mCurrentTrack.title);
+        }
     }
 
     @Override
@@ -79,4 +33,13 @@ public class LyricsActivity extends Activity {
         super.onPostCreate(savedInstanceState);
     }
 
+    @Override
+    public void onTrackDurationChanged(int duration) {
+
+    }
+
+    @Override
+    public void onTrackPositionChanged(int position) {
+
+    }
 }

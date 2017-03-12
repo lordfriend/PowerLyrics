@@ -29,6 +29,8 @@ public class NeteaseCloud {
         public int code;
     }
 
+    public static final int DEFAULT_LIMIT = 20;
+
     private Request.Builder buildRequest(String url) {
         return new Request.Builder()
                 .url(url)
@@ -43,7 +45,7 @@ public class NeteaseCloud {
     }
 
     public SearchResult searchMusic(String name) throws IOException {
-        return searchMusic(name, 0, 20);
+        return searchMusic(name, 0, DEFAULT_LIMIT);
     }
 
     public SearchResult searchMusic(String name, int offset, int limit) throws IOException {

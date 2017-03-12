@@ -7,3 +7,5 @@
 /build
 /captures
 .externalNativeBuild
+/poweramp_api_lib/build
+import-summary.txt
