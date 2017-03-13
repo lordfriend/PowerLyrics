@@ -34,12 +34,14 @@ public class LyricStorage {
         }
     }
 
-    public void saveLyricByTrackId(long trackId, String lyric, String trackTitle) {
+    public void saveLyricByTrackId(long trackId, String lyric, String trackTitle, String album, String artist) {
         SQLiteDatabase db = mDBHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(TrackLyric.Entry.COLUMN_NAME_TRACK_ID, trackId);
         values.put(TrackLyric.Entry.COLUMN_NAME_TRACK_TITLE, trackTitle);
         values.put(TrackLyric.Entry.COLUMN_NAME_LYRIC, lyric);
+        values.put(TrackLyric.Entry.COLUMN_NAME_ALBUM, album);
+        values.put(TrackLyric.Entry.COLUMN_NAME_ARTIST, artist);
 
         db.insert(TrackLyric.Entry.TABLE_NAME, null, values);
     }

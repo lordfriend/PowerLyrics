@@ -1,18 +1,20 @@
 package io.nya.powerlyrics.view;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.support.annotation.Nullable;
-import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextPaint;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.view.View;
 import android.widget.Scroller;
 
 import java.util.ArrayList;
 
+import io.nya.powerlyrics.R;
 import io.nya.powerlyrics.lyric.Lyric;
 import io.nya.powerlyrics.lyric.LyricEntry;
 
@@ -44,22 +46,39 @@ public class LyricView extends View {
 
     public LyricView(Context context) {
         super(context);
+        init(context, null);
     }
 
     public LyricView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
+        init(context, attrs);
     }
 
     public LyricView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        init(context, attrs);
     }
 
-    private void init() {
+    private void init(Context context, AttributeSet attrs) {
         mDefaultPaint = new TextPaint();
-        mDefaultPaint.setColor(Color.LTGRAY);
-
         mHighlighPaint = new TextPaint();
-        mDefaultPaint.setColor(Color.WHITE);
+
+        int defaultTextSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 24, context.getResources().getDisplayMetrics());
+
+        if(attrs != null) {
+            TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.LyricView, 0, 0);
+            try {
+                mDefaultPaint.setColor(a.getColor(R.styleable.LyricView_textColor, Color.LTGRAY));
+                mHighlighPaint.setColor(a.getColor(R.styleable.LyricView_textHighlightColor, Color.WHITE));
+                mDefaultPaint.setTextSize(a.getDimensionPixelSize(R.styleable.LyricView_textSize, defaultTextSize));
+            } finally {
+                a.recycle();
+            }
+        } else {
+            mDefaultPaint.setColor(Color.LTGRAY);
+            mDefaultPaint.setColor(Color.WHITE);
+            mDefaultPaint.setTextSize(defaultTextSize);
+        }
     }
 
     public void setDuration(long duration) {

@@ -8,5 +8,9 @@
         <attr name="metaButtonBarStyle" format="reference" />
         <attr name="metaButtonBarButtonStyle" format="reference" />
     </declare-styleable>
-
+    <declare-styleable name="LyricView">
+        <attr name="textColor" format="color"/>
+        <attr name="textHighlightColor" format="color"/>
+        <attr name="textSize" format="dimension" />
+    </declare-styleable>
 </resources>

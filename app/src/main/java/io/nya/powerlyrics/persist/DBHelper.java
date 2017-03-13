@@ -15,7 +15,9 @@ public class DBHelper extends SQLiteOpenHelper {
             TrackLyric.Entry._ID + " INTEGER PRIMARY KEY," +
             TrackLyric.Entry.COLUMN_NAME_TRACK_ID + " INT," +
             TrackLyric.Entry.COLUMN_NAME_TRACK_TITLE + " TEXT, " +
-            TrackLyric.Entry.COLUMN_NAME_LYRIC + " TEXT)";
+            TrackLyric.Entry.COLUMN_NAME_LYRIC + " TEXT, " +
+            TrackLyric.Entry.COLUMN_NAME_ALBUM + " TEXT, " +
+            TrackLyric.Entry.COLUMN_NAME_ARTIST + " TEXT)";
 
     public static final String SQL_DELETE_ENTRIES = "DROP TABLE IF EXISTS " + TrackLyric.Entry.TABLE_NAME;
 

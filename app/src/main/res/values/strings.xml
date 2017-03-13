@@ -3,4 +3,7 @@
 
     <string name="lyric_found">Lyric found</string>
     <string name="lyric_not_found">Lyric Not Found</string>
+    <string name="searching">Searching</string>
+    <string name="search_error">Error occur in search</string>
+    <string name="lrc_parse_error">Lyric parse error</string>
 </resources>

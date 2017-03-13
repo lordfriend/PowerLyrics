@@ -16,8 +16,10 @@ import com.maxmpz.poweramp.player.PowerampAPI;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
+import io.nya.powerlyrics.LyricApplication;
 import io.nya.powerlyrics.LyricsActivity;
 import io.nya.powerlyrics.R;
+import io.nya.powerlyrics.model.Constants;
 import io.nya.powerlyrics.model.LyricResult;
 import io.nya.powerlyrics.model.SearchResult;
 import io.nya.powerlyrics.model.Track;
@@ -50,21 +52,15 @@ public class PlayService extends Service {
     private CompositeDisposable mDisposable = new CompositeDisposable();
     private NeteaseCloud mLyricSource;
     private LyricStorage mLyricStorage;
-
+    private LyricApplication mApp;
     private int mNotificationId = 0xff;
-
-    private static PlayService instance = null;
-
-    public static PlayService getInstance() {
-        return instance;
-    }
 
     @Override
     public void onCreate() {
         super.onCreate();
         mLyricSource = new NeteaseCloud();
         mLyricStorage = new LyricStorage(DBHelper.getInstance(getApplicationContext()));
-        instance = this;
+        mApp = (LyricApplication) getApplication();
     }
 
     @Override
@@ -86,12 +82,14 @@ public class PlayService extends Service {
                             mCurrentTrack = new Track();
                         }
                         if (realId != mCurrentTrack.realId) {
+                            mCurrentTrack = new Track();
                             mCurrentTrack.id = track.getLong(PowerampAPI.Track.ID);
                             mCurrentTrack.realId = track.getLong(PowerampAPI.Track.REAL_ID);
                             mCurrentTrack.dur = track.getInt(PowerampAPI.Track.DURATION) * 1000;
                             mCurrentTrack.title = track.getString(PowerampAPI.Track.TITLE);
                             mCurrentTrack.album = track.getString(PowerampAPI.Track.ALBUM);
                             mCurrentTrack.artist = track.getString(PowerampAPI.Track.ARTIST);
+                            mApp.mCurrentTrackSubject.onNext(mCurrentTrack);
                             searchTrackLyric();
                         }
                     }
@@ -194,6 +192,7 @@ public class PlayService extends Service {
 
     private void searchTrackLyric() {
         Log.d(LOG_TAG, "current track: " + mCurrentTrack.title);
+        mApp.mSearchStateSubject.onNext(Constants.SearchState.STATE_SEARCHING);
         mDisposable.add(Observable
                 .fromCallable(new Callable<String>() {
                     @Override
@@ -204,7 +203,7 @@ public class PlayService extends Service {
                             // no lyric found. query from lyric source
                             lyric = searchLyricFromSource();
                             // save this lyric
-                            mLyricStorage.saveLyricByTrackId(mCurrentTrack.realId, lyric, mCurrentTrack.title);
+                            mLyricStorage.saveLyricByTrackId(mCurrentTrack.realId, lyric, mCurrentTrack.title, mCurrentTrack.album, mCurrentTrack.artist);
                         }
                         return lyric;
                     }
@@ -216,6 +215,12 @@ public class PlayService extends Service {
                     public void onNext(String s) {
                         Log.d(LOG_TAG, "lyric is: " + s);
                         mCurrentLyric = s;
+                        mApp.mCurrentLyricSubject.onNext(s);
+                        if (s == null) {
+                            mApp.mSearchStateSubject.onNext(Constants.SearchState.STATE_NOT_FOUND);
+                        } else {
+                            mApp.mSearchStateSubject.onNext(Constants.SearchState.STATE_COMPLETE);
+                        }
                         if (mPlayStatus == PowerampAPI.Status.TRACK_PLAYING) {
                             createNotification();
                         }
@@ -224,6 +229,7 @@ public class PlayService extends Service {
                     @Override
                     public void onError(Throwable e) {
                         Log.e(LOG_TAG, e.toString());
+                        mApp.mSearchStateSubject.onNext(Constants.SearchState.STATE_ERROR);
                     }
 
                     @Override
@@ -236,7 +242,7 @@ public class PlayService extends Service {
     @Override
     public void onDestroy() {
         mDisposable.dispose();
-        instance = null;
+        mApp = null;
         super.onDestroy();
     }
 }
