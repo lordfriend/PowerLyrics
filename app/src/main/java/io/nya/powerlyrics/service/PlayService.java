@@ -20,6 +20,7 @@ import io.nya.powerlyrics.LyricApplication;
 import io.nya.powerlyrics.LyricsActivity;
 import io.nya.powerlyrics.R;
 import io.nya.powerlyrics.model.Constants;
+import io.nya.powerlyrics.model.LyricNotFoundException;
 import io.nya.powerlyrics.model.LyricResult;
 import io.nya.powerlyrics.model.SearchResult;
 import io.nya.powerlyrics.model.Track;
@@ -205,6 +206,9 @@ public class PlayService extends Service {
                             // save this lyric
                             mLyricStorage.saveLyricByTrackId(mCurrentTrack.realId, lyric, mCurrentTrack.title, mCurrentTrack.album, mCurrentTrack.artist);
                         }
+                        if (lyric == null) {
+                            throw new LyricNotFoundException();
+                        }
                         return lyric;
                     }
                 })
@@ -216,11 +220,7 @@ public class PlayService extends Service {
                         Log.d(LOG_TAG, "lyric is: " + s);
                         mCurrentLyric = s;
                         mApp.mCurrentLyricSubject.onNext(s);
-                        if (s == null) {
-                            mApp.mSearchStateSubject.onNext(Constants.SearchState.STATE_NOT_FOUND);
-                        } else {
-                            mApp.mSearchStateSubject.onNext(Constants.SearchState.STATE_COMPLETE);
-                        }
+                        mApp.mSearchStateSubject.onNext(Constants.SearchState.STATE_COMPLETE);
                         if (mPlayStatus == PowerampAPI.Status.TRACK_PLAYING) {
                             createNotification();
                         }
@@ -229,7 +229,15 @@ public class PlayService extends Service {
                     @Override
                     public void onError(Throwable e) {
                         Log.e(LOG_TAG, e.toString());
-                        mApp.mSearchStateSubject.onNext(Constants.SearchState.STATE_ERROR);
+                        if (e instanceof LyricNotFoundException) {
+                            mApp.mCurrentLyricSubject.onNext("");
+                            mApp.mSearchStateSubject.onNext(Constants.SearchState.STATE_NOT_FOUND);
+                            if (mPlayStatus == PowerampAPI.Status.TRACK_PLAYING) {
+                                createNotification();
+                            }
+                        } else {
+                            mApp.mSearchStateSubject.onNext(Constants.SearchState.STATE_ERROR);
+                        }
                     }
 
                     @Override

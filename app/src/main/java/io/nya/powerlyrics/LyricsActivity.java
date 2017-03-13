@@ -60,6 +60,7 @@ public class LyricsActivity extends Activity implements RemoteTrackTime.TrackTim
         mTrackTitleView = (TextView) findViewById(R.id.track_title);
 
         mRemoteTrackTime = new RemoteTrackTime(this);
+        mRemoteTrackTime.setTrackTimeListener(this);
     }
 
     @Override
@@ -141,28 +142,38 @@ public class LyricsActivity extends Activity implements RemoteTrackTime.TrackTim
                 Log.d(LOG_TAG, "search state subject complete");
             }
         }));
+
+        mRemoteTrackTime.registerAndLoadStatus();
+        mRemoteTrackTime.startSongProgress();
         super.onResume();
     }
 
     @Override
     protected void onPause() {
         mDisposable.dispose();
+        mRemoteTrackTime.unregister();
+        mRemoteTrackTime.stopSongProgress();
         super.onPause();
     }
 
     @Override
     protected void onDestroy() {
         mApp = null;
+        mRemoteTrackTime.setTrackTimeListener(null);
+        mRemoteTrackTime.unregister();
+
+        mRemoteTrackTime = null;
         super.onDestroy();
     }
 
     @Override
     public void onTrackDurationChanged(int duration) {
-
+        // do nothing
     }
 
     @Override
     public void onTrackPositionChanged(int position) {
-
+        Log.d(LOG_TAG, "play position: " + (position * 1000));
+        mLyricView.updateCurrentTime(position * 1000);
     }
 }

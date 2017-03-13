@@ -32,10 +32,12 @@ public class LyricView extends View {
     private int mCurrentPosition = INVALID_POSITION;
 
     private int mMiddleY = 0;
+    private boolean hasInit = false;
 
     Lyric mLyric;
 
     ArrayList<StaticLayout> mLayoutList = new ArrayList<>();
+    ArrayList<StaticLayout> mHighlightLayoutList = new ArrayList<>();
 
     /**
      * the duration of current music
@@ -71,6 +73,7 @@ public class LyricView extends View {
                 mDefaultPaint.setColor(a.getColor(R.styleable.LyricView_textColor, Color.LTGRAY));
                 mHighlighPaint.setColor(a.getColor(R.styleable.LyricView_textHighlightColor, Color.WHITE));
                 mDefaultPaint.setTextSize(a.getDimensionPixelSize(R.styleable.LyricView_textSize, defaultTextSize));
+                mHighlighPaint.setTextSize(a.getDimensionPixelSize(R.styleable.LyricView_textSize, defaultTextSize));
             } finally {
                 a.recycle();
             }
@@ -100,8 +103,9 @@ public class LyricView extends View {
      * @param currentTime the current play time in milliseconds
      */
     public void updateCurrentTime(long currentTime) {
-        if (mDuration == 0) {
-            throw new RuntimeException("Must set a duration before update current time");
+        if (mDuration == 0 || !hasInit) {
+            // do nothing
+            return;
         }
         final int currentPosition = mCurrentPosition;
         final Lyric lyric = mLyric;
@@ -150,9 +154,9 @@ public class LyricView extends View {
             StaticLayout layout = mLayoutList.get(i);
             delta += layout.getHeight();
         }
-        String lyricText = mLyric.get(position).lyric;
-        int width = getMeasuredWidth();
-        mLayoutList.set(position, new StaticLayout(lyricText, mHighlighPaint, width, StaticLayout.Alignment.ALIGN_CENTER, 1f, 1.5f, true));
+//        String lyricText = mLyric.get(position).lyric;
+//        int width = getMeasuredWidth();
+//        mLayoutList.set(position, new StaticLayout(lyricText, mHighlighPaint, width, StaticLayout.Alignment.ALIGN_CENTER, 1f, 1.5f, true));
         mCurrentPosition = position;
         if (mSmoothScrollbarEnabled == null) {
             mSmoothScrollbarEnabled = new SmoothScrollRunnable();
@@ -168,13 +172,21 @@ public class LyricView extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         int top = mMiddleY - getScrollY();
-        for(StaticLayout layout: mLayoutList) {
-            int childLeft = getPaddingLeft();
-            canvas.save();
-            canvas.translate(childLeft, top);
-            layout.draw(canvas);
-            canvas.restore();
-            top = top + layout.getHeight();
+        if (mLyric != null) {
+            for(int i = 0; i < mLyric.size(); i++) {
+                StaticLayout layout;
+                if (i == mCurrentPosition) {
+                    layout = mHighlightLayoutList.get(i);
+                } else {
+                    layout = mLayoutList.get(i);
+                }
+                int childLeft = getPaddingLeft();
+                canvas.save();
+                canvas.translate(childLeft, top);
+                layout.draw(canvas);
+                canvas.restore();
+                top = top + layout.getHeight();
+            }
         }
     }
 
@@ -186,7 +198,9 @@ public class LyricView extends View {
         if (mLyric != null) {
             for (LyricEntry entry: mLyric) {
                 mLayoutList.add(new StaticLayout(entry.lyric, mDefaultPaint, containerWidth, StaticLayout.Alignment.ALIGN_CENTER, 1f, 1.5f, true));
+                mHighlightLayoutList.add(new StaticLayout(entry.lyric, mHighlighPaint, containerWidth, StaticLayout.Alignment.ALIGN_CENTER, 1f, 1.5f, true));
             }
+            hasInit = true;
         }
     }
 
