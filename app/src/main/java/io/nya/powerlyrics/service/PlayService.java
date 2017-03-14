@@ -62,6 +62,11 @@ public class PlayService extends Service {
         mLyricSource = new NeteaseCloud();
         mLyricStorage = new LyricStorage(DBHelper.getInstance(getApplicationContext()));
         mApp = (LyricApplication) getApplication();
+        Object[] result = mLyricStorage.getLastPlayed();
+        if (result != null) {
+            mCurrentTrack = (Track) result[0];
+            mCurrentLyric = result[1] == null ? null : (String) result[1];
+        }
     }
 
     @Override
@@ -193,6 +198,7 @@ public class PlayService extends Service {
 
     private void searchTrackLyric() {
         Log.d(LOG_TAG, "current track: " + mCurrentTrack.title);
+        mCurrentLyric = null;
         mApp.mSearchStateSubject.onNext(Constants.SearchState.STATE_SEARCHING);
         mDisposable.add(Observable
                 .fromCallable(new Callable<String>() {
@@ -204,7 +210,7 @@ public class PlayService extends Service {
                             // no lyric found. query from lyric source
                             lyric = searchLyricFromSource();
                             // save this lyric
-                            mLyricStorage.saveLyricByTrackId(mCurrentTrack.realId, lyric, mCurrentTrack.title, mCurrentTrack.album, mCurrentTrack.artist);
+                            mLyricStorage.saveLyricAndTrack(mCurrentTrack, lyric);
                         }
                         if (lyric == null) {
                             throw new LyricNotFoundException();
@@ -229,6 +235,7 @@ public class PlayService extends Service {
                     @Override
                     public void onError(Throwable e) {
                         Log.e(LOG_TAG, e.toString());
+                        mCurrentLyric = null;
                         if (e instanceof LyricNotFoundException) {
                             mApp.mCurrentLyricSubject.onNext("");
                             mApp.mSearchStateSubject.onNext(Constants.SearchState.STATE_NOT_FOUND);
@@ -249,6 +256,9 @@ public class PlayService extends Service {
 
     @Override
     public void onDestroy() {
+        mLyricStorage.saveLyricAndTrack(mCurrentTrack, mCurrentLyric);
+        mLyricStorage.saveLastPlayed(mCurrentTrack.id);
+        mLyricStorage.cleanUp();
         mDisposable.dispose();
         mApp = null;
         super.onDestroy();

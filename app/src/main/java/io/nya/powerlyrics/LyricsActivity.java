@@ -1,12 +1,17 @@
 package io.nya.powerlyrics;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.maxmpz.poweramp.player.PowerampAPI;
 import com.maxmpz.poweramp.player.RemoteTrackTime;
 
 import java.io.IOException;
@@ -22,7 +27,7 @@ import io.reactivex.observers.DisposableObserver;
 
 public class LyricsActivity extends Activity implements RemoteTrackTime.TrackTimeListener {
 
-    private final static String LOG_TAG = LyricsActivity.class.getName();
+    private final static String TAG = LyricsActivity.class.getName();
 
     RemoteTrackTime mRemoteTrackTime;
 
@@ -35,6 +40,16 @@ public class LyricsActivity extends Activity implements RemoteTrackTime.TrackTim
     LyricView mLyricView;
     TextView mTrackTitleView;
 
+    private BroadcastReceiver mTrackPosSyncReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            int pos = intent.getIntExtra(PowerampAPI.Track.POSITION, 0);
+            Log.d(TAG, "mTrackPosSyncReceiver sync=" + pos);
+//                updateTrackPosition(pos);
+        }
+
+    };
+
     private void setLyric(String lyricStr) {
         try {
             Lyric lyric = LyricParser.parse(lyricStr);
@@ -46,6 +61,16 @@ public class LyricsActivity extends Activity implements RemoteTrackTime.TrackTim
             mStateIndicator.setText(getResources().getString(R.string.lrc_parse_error));
             e.printStackTrace();
         }
+    }
+
+    private void trackPlayerStatus() {
+        IntentFilter filter = new IntentFilter(PowerampAPI.ACTION_TRACK_POS_SYNC);
+        registerReceiver(mTrackPosSyncReceiver, filter);
+        startService(PowerampAPI.newAPIIntent().putExtra(PowerampAPI.COMMAND, PowerampAPI.Commands.POS_SYNC));
+    }
+
+    private void stopTrackPlayerStatus() {
+        unregisterReceiver(mTrackPosSyncReceiver);
     }
 
     @Override
@@ -80,12 +105,12 @@ public class LyricsActivity extends Activity implements RemoteTrackTime.TrackTim
 
             @Override
             public void onError(Throwable e) {
-                Log.e(LOG_TAG, e.toString());
+                Log.e(TAG, e.toString());
             }
 
             @Override
             public void onComplete() {
-                Log.d(LOG_TAG, "current track subject complete");
+                Log.d(TAG, "current track subject complete");
             }
         }));
         mDisposable.add(mApp.mCurrentLyricSubject.subscribeWith(new DisposableObserver<String>() {
@@ -99,12 +124,12 @@ public class LyricsActivity extends Activity implements RemoteTrackTime.TrackTim
 
             @Override
             public void onError(Throwable e) {
-                Log.e(LOG_TAG, e.toString());
+                Log.e(TAG, e.toString());
             }
 
             @Override
             public void onComplete() {
-                Log.d(LOG_TAG, "current lyric subject complete");
+                Log.d(TAG, "current lyric subject complete");
             }
         }));
         mDisposable.add(mApp.mSearchStateSubject.subscribeWith(new DisposableObserver<Integer>() {
@@ -137,34 +162,35 @@ public class LyricsActivity extends Activity implements RemoteTrackTime.TrackTim
 
             @Override
             public void onError(Throwable e) {
-                Log.e(LOG_TAG, e.toString());
+                Log.e(TAG, e.toString());
             }
 
             @Override
             public void onComplete() {
-                Log.d(LOG_TAG, "search state subject complete");
+                Log.d(TAG, "search state subject complete");
             }
         }));
 
-        mRemoteTrackTime.registerAndLoadStatus();
-        mRemoteTrackTime.startSongProgress();
+//        mRemoteTrackTime.registerAndLoadStatus();
+//        mRemoteTrackTime.startSongProgress();
+        trackPlayerStatus();
         super.onResume();
     }
 
     @Override
     protected void onPause() {
         mDisposable.dispose();
-        mRemoteTrackTime.unregister();
-        mRemoteTrackTime.stopSongProgress();
+//        mRemoteTrackTime.unregister();
+//        mRemoteTrackTime.stopSongProgress();
+        stopTrackPlayerStatus();
         super.onPause();
     }
 
     @Override
     protected void onDestroy() {
         mApp = null;
-        mRemoteTrackTime.setTrackTimeListener(null);
-        mRemoteTrackTime.unregister();
-
+//        mRemoteTrackTime.setTrackTimeListener(null);
+//        mRemoteTrackTime.unregister();
         mRemoteTrackTime = null;
         super.onDestroy();
     }
@@ -176,7 +202,7 @@ public class LyricsActivity extends Activity implements RemoteTrackTime.TrackTim
 
     @Override
     public void onTrackPositionChanged(int position) {
-//        Log.d(LOG_TAG, "play position: " + (position * 1000));
+//        Log.d(TAG, "play position: " + (position * 1000));
         mLyricView.updateCurrentTime(position * 1000);
     }
 }
