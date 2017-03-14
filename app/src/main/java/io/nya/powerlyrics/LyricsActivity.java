@@ -91,6 +91,9 @@ public class LyricsActivity extends Activity implements RemoteTrackTime.TrackTim
         mDisposable.add(mApp.mCurrentLyricSubject.subscribeWith(new DisposableObserver<String>() {
             @Override
             public void onNext(String lyric) {
+                if ("".equals(lyric)) {
+                    return;
+                }
                 setLyric(lyric);
             }
 
@@ -173,7 +176,7 @@ public class LyricsActivity extends Activity implements RemoteTrackTime.TrackTim
 
     @Override
     public void onTrackPositionChanged(int position) {
-        Log.d(LOG_TAG, "play position: " + (position * 1000));
+//        Log.d(LOG_TAG, "play position: " + (position * 1000));
         mLyricView.updateCurrentTime(position * 1000);
     }
 }

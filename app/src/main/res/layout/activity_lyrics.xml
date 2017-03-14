@@ -41,7 +41,7 @@
             android:layout_alignParentTop="true"
             android:layout_above="@id/track_title"
             nya:textColor="#d0d0d0"
-            nya:textHighlightColor="#e0e0e0"
+            nya:textHighlightColor="#ffffff"
             nya:textSize="24sp"/>
 
     </RelativeLayout>

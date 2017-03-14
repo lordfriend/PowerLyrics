@@ -24,7 +24,11 @@ import io.nya.powerlyrics.lyric.LyricEntry;
 
 public class LyricView extends View {
 
+    private static final String TAG = LyricView.class.getName();
+
     private static final int INVALID_POSITION = -1;
+
+    private static final int SMOOTH_SCROLL_DURATION = 400;
 
     private TextPaint mDefaultPaint;
     private TextPaint mHighlighPaint;
@@ -36,8 +40,8 @@ public class LyricView extends View {
 
     Lyric mLyric;
 
-    ArrayList<StaticLayout> mLayoutList = new ArrayList<>();
-    ArrayList<StaticLayout> mHighlightLayoutList = new ArrayList<>();
+    ArrayList<StaticLayout> mLayoutList;
+    ArrayList<StaticLayout> mHighlightLayoutList;
 
     /**
      * the duration of current music
@@ -150,13 +154,10 @@ public class LyricView extends View {
             direction = "up";
         }
         int delta = 0;
-        for (int i = startPos; i <= endPos; i++) {
+        for (int i = startPos; i < endPos; i++) {
             StaticLayout layout = mLayoutList.get(i);
             delta += layout.getHeight();
         }
-//        String lyricText = mLyric.get(position).lyric;
-//        int width = getMeasuredWidth();
-//        mLayoutList.set(position, new StaticLayout(lyricText, mHighlighPaint, width, StaticLayout.Alignment.ALIGN_CENTER, 1f, 1.5f, true));
         mCurrentPosition = position;
         if (mSmoothScrollbarEnabled == null) {
             mSmoothScrollbarEnabled = new SmoothScrollRunnable();
@@ -171,7 +172,8 @@ public class LyricView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        int top = mMiddleY - getScrollY();
+        int top = mMiddleY;
+        int childLeft = getPaddingLeft();
         if (mLyric != null) {
             for(int i = 0; i < mLyric.size(); i++) {
                 StaticLayout layout;
@@ -180,12 +182,11 @@ public class LyricView extends View {
                 } else {
                     layout = mLayoutList.get(i);
                 }
-                int childLeft = getPaddingLeft();
                 canvas.save();
                 canvas.translate(childLeft, top);
                 layout.draw(canvas);
                 canvas.restore();
-                top = top + layout.getHeight();
+                top += layout.getHeight();
             }
         }
     }
@@ -196,6 +197,8 @@ public class LyricView extends View {
         int containerWidth = MeasureSpec.getSize(widthMeasureSpec);
         mMiddleY = MeasureSpec.getSize(heightMeasureSpec) / 2;
         if (mLyric != null) {
+            mLayoutList = new ArrayList<>();
+            mHighlightLayoutList = new ArrayList<>();
             for (LyricEntry entry: mLyric) {
                 mLayoutList.add(new StaticLayout(entry.lyric, mDefaultPaint, containerWidth, StaticLayout.Alignment.ALIGN_CENTER, 1f, 1.5f, true));
                 mHighlightLayoutList.add(new StaticLayout(entry.lyric, mHighlighPaint, containerWidth, StaticLayout.Alignment.ALIGN_CENTER, 1f, 1.5f, true));
@@ -214,7 +217,7 @@ public class LyricView extends View {
 
         void startScroll(int distance) {
             mScroller.abortAnimation();
-            mScroller.startScroll(0, 0, 0, distance);
+            mScroller.startScroll(0, getScrollY(), 0, distance, SMOOTH_SCROLL_DURATION);
             postOnAnimation(this);
         }
 
@@ -222,6 +225,7 @@ public class LyricView extends View {
         public void run() {
             if(mScroller.computeScrollOffset()) {
                 setScrollY(mScroller.getCurrY());
+                postOnAnimation(this);
             }
         }
     }
