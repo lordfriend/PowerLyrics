@@ -42,7 +42,7 @@
             </intent-filter>
         </receiver>
         <receiver
-            android:name=".onStatusChange"
+            android:name=".OnStatusChange"
             android:enabled="true"
             android:exported="true">
             <intent-filter>

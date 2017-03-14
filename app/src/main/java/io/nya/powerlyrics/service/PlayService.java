@@ -14,6 +14,7 @@ import android.util.Log;
 import com.maxmpz.poweramp.player.PowerampAPI;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.util.concurrent.Callable;
 
 import io.nya.powerlyrics.LyricApplication;
@@ -22,12 +23,14 @@ import io.nya.powerlyrics.R;
 import io.nya.powerlyrics.model.Constants;
 import io.nya.powerlyrics.model.LyricNotFoundException;
 import io.nya.powerlyrics.model.LyricResult;
+import io.nya.powerlyrics.model.PlayStatus;
 import io.nya.powerlyrics.model.SearchResult;
 import io.nya.powerlyrics.model.Track;
 import io.nya.powerlyrics.persist.DBHelper;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.observers.DisposableObserver;
 import io.reactivex.schedulers.Schedulers;
 
@@ -46,11 +49,12 @@ public class PlayService extends Service {
      */
     public Track mCurrentTrack;
 
-    public int mPlayStatus;
+    public PlayStatus mPlayStatus;
 
     public String mCurrentLyric = null;
 
     private CompositeDisposable mDisposable = new CompositeDisposable();
+    private Disposable mSearchLyricDisposable = null;
     private NeteaseCloud mLyricSource;
     private LyricStorage mLyricStorage;
     private LyricApplication mApp;
@@ -77,37 +81,43 @@ public class PlayService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Bundle trackBundle;
         if (intent != null) {
             switch (intent.getAction()) {
                 case ACTION_TRACK_CHANGED:
-                    Bundle track = intent.getBundleExtra(PowerampAPI.TRACK);
+                    trackBundle = intent.getBundleExtra(PowerampAPI.TRACK);
 //                    Long ts = intent.getLongExtra("ts", System.currentTimeMillis());
-                    if (track != null) {
-                        long realId = track.getLong(PowerampAPI.Track.REAL_ID);
+                    if (trackBundle != null) {
+                        long realId = trackBundle.getLong(PowerampAPI.Track.REAL_ID);
                         if (mCurrentTrack == null) {
                             mCurrentTrack = new Track();
                         }
                         if (realId != mCurrentTrack.realId) {
-                            mCurrentTrack = new Track();
-                            mCurrentTrack.id = track.getLong(PowerampAPI.Track.ID);
-                            mCurrentTrack.realId = track.getLong(PowerampAPI.Track.REAL_ID);
-                            mCurrentTrack.dur = track.getInt(PowerampAPI.Track.DURATION) * 1000;
-                            mCurrentTrack.title = track.getString(PowerampAPI.Track.TITLE);
-                            mCurrentTrack.album = track.getString(PowerampAPI.Track.ALBUM);
-                            mCurrentTrack.artist = track.getString(PowerampAPI.Track.ARTIST);
+                            mCurrentTrack = createTrack(trackBundle);
                             mApp.mCurrentTrackSubject.onNext(mCurrentTrack);
                             searchTrackLyric();
                         }
                     }
                     break;
                 case ACTION_STATUS_CHANGED:
-                    mPlayStatus = intent.getIntExtra(PowerampAPI.STATUS, PowerampAPI.Status.TRACK_PLAYING);
-                    Log.d(LOG_TAG, "Status changed: " + mPlayStatus);
-                    if (mPlayStatus == PowerampAPI.Status.TRACK_PLAYING) {
+                    mPlayStatus = new PlayStatus();
+                    mPlayStatus.status = intent.getIntExtra(PowerampAPI.STATUS, PowerampAPI.Status.TRACK_PLAYING);
+                    if (mPlayStatus.status == PowerampAPI.Status.TRACK_PLAYING) {
+                        mPlayStatus.isPaused = intent.getBooleanExtra(PowerampAPI.PAUSED, false);
+                        trackBundle = intent.getBundleExtra(PowerampAPI.TRACK);
+                        Log.d(LOG_TAG, "trackBundle is null: " + (trackBundle == null));
+                        if (trackBundle != null) {
+                            Track track = createTrack(trackBundle);
+                            if (track.id != mCurrentTrack.id && track.realId != mCurrentTrack.realId) {
+                                mCurrentTrack = track;
+                                mApp.mCurrentTrackSubject.onNext(mCurrentTrack);
+                            }
+                        }
                         createNotification();
-                    } else if (mPlayStatus == PowerampAPI.Status.PLAYING_ENDED) {
+                    } else if (mPlayStatus.status == PowerampAPI.Status.PLAYING_ENDED) {
                         removeNotification();
                     }
+                    mApp.mStatusSubject.onNext(mPlayStatus);
                     break;
                 default:
                     // Do nothing
@@ -116,10 +126,22 @@ public class PlayService extends Service {
         return START_STICKY;
     }
 
+    private Track createTrack(Bundle trackBundle) {
+        Track track = new Track();
+        track.id = trackBundle.getLong(PowerampAPI.Track.ID);
+        track.realId = trackBundle.getLong(PowerampAPI.Track.REAL_ID);
+        track.dur = trackBundle.getInt(PowerampAPI.Track.DURATION) * 1000;
+        track.title = trackBundle.getString(PowerampAPI.Track.TITLE);
+        track.album = trackBundle.getString(PowerampAPI.Track.ALBUM);
+        track.artist = trackBundle.getString(PowerampAPI.Track.ARTIST);
+        return track;
+    }
+
     /**
      * Create a notification intent and add a new notification or update an exist notification
      */
     private void createNotification() {
+//        Log.d(LOG_TAG, "create notification, mCurrentTrack is null: " + (mCurrentTrack == null));
         if (mCurrentTrack == null) {
             return;
         }
@@ -200,22 +222,32 @@ public class PlayService extends Service {
         Log.d(LOG_TAG, "current track: " + mCurrentTrack.title);
         mCurrentLyric = null;
         mApp.mSearchStateSubject.onNext(Constants.SearchState.STATE_SEARCHING);
-        mDisposable.add(Observable
+        // remove the former task
+        if (mSearchLyricDisposable != null) {
+            mDisposable.remove(mSearchLyricDisposable);
+        }
+        mSearchLyricDisposable = Observable
                 .fromCallable(new Callable<String>() {
                     @Override
                     public String call() throws Exception {
-                        // query the saved lyric from storage.
-                        String lyric = mLyricStorage.getLyricByTrackId(mCurrentTrack.realId);
-                        if (lyric == null) {
-                            // no lyric found. query from lyric source
-                            lyric = searchLyricFromSource();
-                            // save this lyric
-                            mLyricStorage.saveLyricAndTrack(mCurrentTrack, lyric);
+                        try {
+                            // query the saved lyric from storage.
+                            String lyric = mLyricStorage.getLyricByTrackId(mCurrentTrack.realId);
+                            if (lyric == null) {
+                                // no lyric found. query from lyric source
+                                lyric = searchLyricFromSource();
+                                // save this lyric
+                                mLyricStorage.saveLyricAndTrack(mCurrentTrack, lyric);
+                            }
+                            mLyricStorage.saveLastPlayed(mCurrentTrack.id);
+                            if (lyric == null) {
+                                throw new LyricNotFoundException();
+                            }
+                            return lyric;
+                        } catch (InterruptedIOException e) {
+                            Log.d(LOG_TAG, "cancelled");
+                            return "";
                         }
-                        if (lyric == null) {
-                            throw new LyricNotFoundException();
-                        }
-                        return lyric;
                     }
                 })
                 .subscribeOn(Schedulers.io())
@@ -223,11 +255,11 @@ public class PlayService extends Service {
                 .subscribeWith(new DisposableObserver<String>() {
                     @Override
                     public void onNext(String s) {
-                        Log.d(LOG_TAG, "lyric is: " + s);
+//                        Log.d(LOG_TAG, "lyric is: " + s);
                         mCurrentLyric = s;
                         mApp.mCurrentLyricSubject.onNext(s);
                         mApp.mSearchStateSubject.onNext(Constants.SearchState.STATE_COMPLETE);
-                        if (mPlayStatus == PowerampAPI.Status.TRACK_PLAYING) {
+                        if (mPlayStatus.status == PowerampAPI.Status.TRACK_PLAYING) {
                             createNotification();
                         }
                     }
@@ -239,7 +271,7 @@ public class PlayService extends Service {
                         if (e instanceof LyricNotFoundException) {
                             mApp.mCurrentLyricSubject.onNext("");
                             mApp.mSearchStateSubject.onNext(Constants.SearchState.STATE_NOT_FOUND);
-                            if (mPlayStatus == PowerampAPI.Status.TRACK_PLAYING) {
+                            if (mPlayStatus.status == PowerampAPI.Status.TRACK_PLAYING) {
                                 createNotification();
                             }
                         } else {
@@ -251,13 +283,12 @@ public class PlayService extends Service {
                     public void onComplete() {
                         Log.e(LOG_TAG, "complete");
                     }
-                }));
+                });
+        mDisposable.add(mSearchLyricDisposable);
     }
 
     @Override
     public void onDestroy() {
-        mLyricStorage.saveLyricAndTrack(mCurrentTrack, mCurrentLyric);
-        mLyricStorage.saveLastPlayed(mCurrentTrack.id);
         mLyricStorage.cleanUp();
         mDisposable.dispose();
         mApp = null;

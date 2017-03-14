@@ -2,6 +2,7 @@ package io.nya.powerlyrics;
 
 import android.app.Application;
 
+import io.nya.powerlyrics.model.PlayStatus;
 import io.nya.powerlyrics.model.Track;
 import io.reactivex.subjects.BehaviorSubject;
 
@@ -13,6 +14,7 @@ public class LyricApplication extends Application {
     public BehaviorSubject<Track> mCurrentTrackSubject;
     public BehaviorSubject<String> mCurrentLyricSubject;
     public BehaviorSubject<Integer> mSearchStateSubject;
+    public BehaviorSubject<PlayStatus> mStatusSubject;
 
     @Override
     public void onCreate() {
@@ -20,5 +22,6 @@ public class LyricApplication extends Application {
         mCurrentTrackSubject = BehaviorSubject.create();
         mCurrentLyricSubject = BehaviorSubject.create();
         mSearchStateSubject = BehaviorSubject.create();
+        mStatusSubject = BehaviorSubject.create();
     }
 }

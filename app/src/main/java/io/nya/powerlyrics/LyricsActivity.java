@@ -12,43 +12,124 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.maxmpz.poweramp.player.PowerampAPI;
-import com.maxmpz.poweramp.player.RemoteTrackTime;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import io.nya.powerlyrics.lyric.Lyric;
 import io.nya.powerlyrics.lyric.LyricParser;
 import io.nya.powerlyrics.model.Constants;
+import io.nya.powerlyrics.model.PlayStatus;
 import io.nya.powerlyrics.model.Track;
 import io.nya.powerlyrics.view.LyricView;
+import io.reactivex.Observable;
+import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.functions.Function;
+import io.reactivex.functions.Predicate;
 import io.reactivex.observers.DisposableObserver;
 
 
-public class LyricsActivity extends Activity implements RemoteTrackTime.TrackTimeListener {
+public class LyricsActivity extends Activity {
 
     private final static String TAG = LyricsActivity.class.getName();
 
-    RemoteTrackTime mRemoteTrackTime;
+    /**
+     * the interval to update play position
+     */
+    private static final long DEFAULT_INTERVAL = 400;
+    /**
+     * whenever a play status changes to pause or stop. invalid current position
+     */
+    private static final long INVALID_POSITION = -1;
 
     private LyricApplication mApp;
     private CompositeDisposable mDisposable = new CompositeDisposable();
     private Track mCurrentTrack;
+    private long mCurrentTrackPos;
+    private long mLastSyncTimestamp;
+    private PlayStatus mPlayStatus;
 
     TextView mStateIndicator;
     ViewGroup mMainContainer;
     LyricView mLyricView;
     TextView mTrackTitleView;
 
+    private void updateTrackPosition(int position) {
+        mCurrentTrackPos = position * 1000;
+        Log.d(TAG, "mTrackPosSyncReceiver sync=" + mCurrentTrackPos);
+        mLastSyncTimestamp = System.currentTimeMillis();
+    }
+
     private BroadcastReceiver mTrackPosSyncReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             int pos = intent.getIntExtra(PowerampAPI.Track.POSITION, 0);
-            Log.d(TAG, "mTrackPosSyncReceiver sync=" + pos);
-//                updateTrackPosition(pos);
+            updateTrackPosition(pos);
         }
 
     };
+
+//    private BroadcastReceiver mStatsChangeReceiver = new BroadcastReceiver() {
+//        @Override
+//        public void onReceive(Context context, Intent intent) {
+//            int lastPlayingStatus = mPlayingStatus;
+//            boolean lastPauseStatus = isPaused;
+//            mPlayingStatus = intent.getIntExtra(PowerampAPI.STATUS, -1);
+//            if (mPlayingStatus == PowerampAPI.Status.TRACK_PLAYING) {
+//                isPaused = intent.getBooleanExtra(PowerampAPI.PAUSED, false);
+//                Log.d(TAG, "play status changed: " + mPlayingStatus + ", isPaused: " + isPaused);
+//            }
+//            if (mPlayingStatus == PowerampAPI.Status.TRACK_PLAYING && !isPaused && (lastPlayingStatus != mPlayingStatus
+//                    || lastPauseStatus)) {
+//                startTrackPosition();
+//            }
+//        }
+//    };
+
+    private void startTrackPosition() {
+        // immediately sync the position of track.
+        startService(PowerampAPI.newAPIIntent().putExtra(PowerampAPI.COMMAND, PowerampAPI.Commands.POS_SYNC));
+
+        mDisposable.add(Observable.interval(DEFAULT_INTERVAL, TimeUnit.MILLISECONDS)
+                .mergeWith(mApp.mStatusSubject.map(new Function<PlayStatus, Long>() {
+                    @Override
+                    public Long apply(@NonNull PlayStatus status) throws Exception {
+                        mPlayStatus = status;
+                        return 0L;
+                    }
+                }))
+                .filter(new Predicate<Long>() {
+                    @Override
+                    public boolean test(@NonNull Long aLong) throws Exception {
+                        return mPlayStatus != null && mPlayStatus.status == PowerampAPI.Status.TRACK_PLAYING && !mPlayStatus.isPaused;
+                    }
+                })
+                .map(new Function<Long, Long>() {
+                    @Override
+                    public Long apply(@NonNull Long aLong) throws Exception {
+                        return System.currentTimeMillis() - mLastSyncTimestamp + mCurrentTrackPos;
+                    }
+                })
+                .subscribeWith(new DisposableObserver<Long>() {
+                    @Override
+                    public void onNext(Long pos) {
+                        mLyricView.updateCurrentTime(pos);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.e(TAG, "track error: " + e.toString());
+                        mCurrentTrackPos = INVALID_POSITION;
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        Log.d(TAG, "Track complete");
+                        mCurrentTrackPos = INVALID_POSITION;
+                    }
+                }));
+    }
 
     private void setLyric(String lyricStr) {
         try {
@@ -64,13 +145,14 @@ public class LyricsActivity extends Activity implements RemoteTrackTime.TrackTim
     }
 
     private void trackPlayerStatus() {
-        IntentFilter filter = new IntentFilter(PowerampAPI.ACTION_TRACK_POS_SYNC);
-        registerReceiver(mTrackPosSyncReceiver, filter);
-        startService(PowerampAPI.newAPIIntent().putExtra(PowerampAPI.COMMAND, PowerampAPI.Commands.POS_SYNC));
+        registerReceiver(mTrackPosSyncReceiver, new IntentFilter(PowerampAPI.ACTION_TRACK_POS_SYNC));
+//        registerReceiver(mStatsChangeReceiver, new IntentFilter(PowerampAPI.ACTION_STATUS_CHANGED));
+        startTrackPosition();
     }
 
     private void stopTrackPlayerStatus() {
         unregisterReceiver(mTrackPosSyncReceiver);
+//        unregisterReceiver(mStatsChangeReceiver);
     }
 
     @Override
@@ -83,9 +165,6 @@ public class LyricsActivity extends Activity implements RemoteTrackTime.TrackTim
         mMainContainer = (ViewGroup) findViewById(R.id.main_content_container);
         mLyricView = (LyricView) findViewById(R.id.lyric_view);
         mTrackTitleView = (TextView) findViewById(R.id.track_title);
-
-        mRemoteTrackTime = new RemoteTrackTime(this);
-        mRemoteTrackTime.setTrackTimeListener(this);
     }
 
     @Override
@@ -135,7 +214,7 @@ public class LyricsActivity extends Activity implements RemoteTrackTime.TrackTim
         mDisposable.add(mApp.mSearchStateSubject.subscribeWith(new DisposableObserver<Integer>() {
             @Override
             public void onNext(Integer state) {
-                switch(state) {
+                switch (state) {
                     case Constants.SearchState.STATE_SEARCHING:
                         mMainContainer.setVisibility(View.INVISIBLE);
                         mStateIndicator.setVisibility(View.VISIBLE);
@@ -171,8 +250,6 @@ public class LyricsActivity extends Activity implements RemoteTrackTime.TrackTim
             }
         }));
 
-//        mRemoteTrackTime.registerAndLoadStatus();
-//        mRemoteTrackTime.startSongProgress();
         trackPlayerStatus();
         super.onResume();
     }
@@ -180,8 +257,6 @@ public class LyricsActivity extends Activity implements RemoteTrackTime.TrackTim
     @Override
     protected void onPause() {
         mDisposable.dispose();
-//        mRemoteTrackTime.unregister();
-//        mRemoteTrackTime.stopSongProgress();
         stopTrackPlayerStatus();
         super.onPause();
     }
@@ -189,20 +264,7 @@ public class LyricsActivity extends Activity implements RemoteTrackTime.TrackTim
     @Override
     protected void onDestroy() {
         mApp = null;
-//        mRemoteTrackTime.setTrackTimeListener(null);
-//        mRemoteTrackTime.unregister();
-        mRemoteTrackTime = null;
         super.onDestroy();
     }
 
-    @Override
-    public void onTrackDurationChanged(int duration) {
-        // do nothing
-    }
-
-    @Override
-    public void onTrackPositionChanged(int position) {
-//        Log.d(TAG, "play position: " + (position * 1000));
-        mLyricView.updateCurrentTime(position * 1000);
-    }
 }
