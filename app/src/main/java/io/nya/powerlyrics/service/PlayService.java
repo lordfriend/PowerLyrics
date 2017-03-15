@@ -18,6 +18,7 @@ import java.io.InterruptedIOException;
 import java.util.concurrent.Callable;
 
 import io.nya.powerlyrics.LyricApplication;
+import io.nya.powerlyrics.LyricChooserActivy;
 import io.nya.powerlyrics.LyricsActivity;
 import io.nya.powerlyrics.R;
 import io.nya.powerlyrics.model.LyricResult;
@@ -134,7 +135,8 @@ public class PlayService extends Service {
         Track track = new Track();
         track.id = trackBundle.getLong(PowerampAPI.Track.ID);
         track.realId = trackBundle.getLong(PowerampAPI.Track.REAL_ID);
-        track.dur = trackBundle.getLong(PowerampAPI.Track.DURATION);
+        track.dur = trackBundle.getInt(PowerampAPI.Track.DURATION) * 1000;
+        Log.d(LOG_TAG, "duration = " + track.dur);
         track.title = trackBundle.getString(PowerampAPI.Track.TITLE);
         track.album = trackBundle.getString(PowerampAPI.Track.ALBUM);
         track.artist = trackBundle.getString(PowerampAPI.Track.ARTIST);
@@ -150,18 +152,36 @@ public class PlayService extends Service {
         if (mCurrentTrack == null) {
             return;
         }
-        boolean lyricFound = mCurrentTrack.lyric != null;
+        boolean lyricFound = mCurrentTrack.lyric_status == Track.LyricStatus.FOUND;
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle(mCurrentTrack.title)
-                .setContentText(lyricFound ? getResources().getText(R.string.lyric_found) : getResources().getText(R.string.lyric_not_found));
+                .setContentTitle(mCurrentTrack.title);
 
-        Intent resultIntent = new Intent(this, LyricsActivity.class);
+        switch (mCurrentTrack.lyric_status) {
+            case Track.LyricStatus.FOUND:
+                builder.setContentText(getResources().getText(R.string.lyric_found));
+                break;
+            case Track.LyricStatus.NOT_FOUND:
+                builder.setContentText(getResources().getText(R.string.lyric_not_found));
+                break;
+            case Track.LyricStatus.ERROR:
+                builder.setContentText(getResources().getText(R.string.search_error));
+                break;
+            case Track.LyricStatus.SEARCHING:
+                builder.setContentText(getResources().getText(R.string.searching));
+                break;
+        }
+
+        Intent resultIntent = new Intent();
         if (lyricFound) {
             resultIntent.setAction(ACTION_LYRIC_FOUND);
+            resultIntent.setClass(this, LyricsActivity.class);
         } else {
             resultIntent.setAction(ACTION_LYRIC_NOT_FOUND);
+            resultIntent.setClass(this, LyricChooserActivy.class);
+            // put mCurrentTrack to bundle
+//            resultIntent.putExtra(PowerampAPI.TRACK, mCurrentTrack);
         }
 
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
@@ -268,6 +288,7 @@ public class PlayService extends Service {
                     @Override
                     public void onNext(Track track) {
                         if (mCurrentTrack.id == track.id) {
+                            mCurrentTrack = track;
                             mApp.mCurrentTrackSubject.onNext(track);
                         }
                         if (mPlayStatus.status == PowerampAPI.Status.TRACK_PLAYING) {

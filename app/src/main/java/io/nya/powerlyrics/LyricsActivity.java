@@ -143,7 +143,7 @@ public class LyricsActivity extends Activity {
         if (Intent.ACTION_MAIN.equals(action)) {
             Intent serviceIntent = new Intent(PlayService.ACTION_FROM_LAUNCHER);
             serviceIntent.setClass(this, PlayService.class);
-            startActivity(serviceIntent);
+            startService(serviceIntent);
         }
     }
 

@@ -29,8 +29,8 @@ public class OnStatusChange extends BroadcastReceiver {
             serviceIntent.putExtra(PowerampAPI.FAILED, intent.getBooleanExtra(PowerampAPI.FAILED, false));
         }
         Log.e(TAG, "status: " + status + ", paused: " + intent.getBooleanExtra(PowerampAPI.PAUSED, false) + ", track is null: " + intent.getBundleExtra(PowerampAPI.TRACK));
-//        if (status != -1) {
-//            context.startService(serviceIntent);
-//        }
+        if (status != -1) {
+            context.startService(serviceIntent);
+        }
     }
 }
