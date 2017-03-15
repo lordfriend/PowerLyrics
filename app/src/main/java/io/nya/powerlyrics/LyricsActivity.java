@@ -18,9 +18,9 @@ import java.util.concurrent.TimeUnit;
 
 import io.nya.powerlyrics.lyric.Lyric;
 import io.nya.powerlyrics.lyric.LyricParser;
-import io.nya.powerlyrics.model.Constants;
 import io.nya.powerlyrics.model.PlayStatus;
 import io.nya.powerlyrics.model.Track;
+import io.nya.powerlyrics.service.PlayService;
 import io.nya.powerlyrics.view.LyricView;
 import io.reactivex.Observable;
 import io.reactivex.annotations.NonNull;
@@ -69,23 +69,6 @@ public class LyricsActivity extends Activity {
         }
 
     };
-
-//    private BroadcastReceiver mStatsChangeReceiver = new BroadcastReceiver() {
-//        @Override
-//        public void onReceive(Context context, Intent intent) {
-//            int lastPlayingStatus = mPlayingStatus;
-//            boolean lastPauseStatus = isPaused;
-//            mPlayingStatus = intent.getIntExtra(PowerampAPI.STATUS, -1);
-//            if (mPlayingStatus == PowerampAPI.Status.TRACK_PLAYING) {
-//                isPaused = intent.getBooleanExtra(PowerampAPI.PAUSED, false);
-//                Log.d(TAG, "play status changed: " + mPlayingStatus + ", isPaused: " + isPaused);
-//            }
-//            if (mPlayingStatus == PowerampAPI.Status.TRACK_PLAYING && !isPaused && (lastPlayingStatus != mPlayingStatus
-//                    || lastPauseStatus)) {
-//                startTrackPosition();
-//            }
-//        }
-//    };
 
     private void startTrackPosition() {
         // immediately sync the position of track.
@@ -155,6 +138,15 @@ public class LyricsActivity extends Activity {
 //        unregisterReceiver(mStatsChangeReceiver);
     }
 
+    private void handleIntent(Intent intent) {
+        String action = intent.getAction();
+        if (Intent.ACTION_MAIN.equals(action)) {
+            Intent serviceIntent = new Intent(PlayService.ACTION_FROM_LAUNCHER);
+            serviceIntent.setClass(this, PlayService.class);
+            startActivity(serviceIntent);
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -165,11 +157,18 @@ public class LyricsActivity extends Activity {
         mMainContainer = (ViewGroup) findViewById(R.id.main_content_container);
         mLyricView = (LyricView) findViewById(R.id.lyric_view);
         mTrackTitleView = (TextView) findViewById(R.id.track_title);
+        handleIntent(getIntent());
     }
 
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        handleIntent(intent);
+        super.onNewIntent(intent);
     }
 
     @Override
@@ -180,56 +179,23 @@ public class LyricsActivity extends Activity {
                 mCurrentTrack = track;
                 setTitle(track.title);
                 mTrackTitleView.setText(track.title);
-            }
-
-            @Override
-            public void onError(Throwable e) {
-                Log.e(TAG, e.toString());
-            }
-
-            @Override
-            public void onComplete() {
-                Log.d(TAG, "current track subject complete");
-            }
-        }));
-        mDisposable.add(mApp.mCurrentLyricSubject.subscribeWith(new DisposableObserver<String>() {
-            @Override
-            public void onNext(String lyric) {
-                if ("".equals(lyric)) {
-                    return;
-                }
-                setLyric(lyric);
-            }
-
-            @Override
-            public void onError(Throwable e) {
-                Log.e(TAG, e.toString());
-            }
-
-            @Override
-            public void onComplete() {
-                Log.d(TAG, "current lyric subject complete");
-            }
-        }));
-        mDisposable.add(mApp.mSearchStateSubject.subscribeWith(new DisposableObserver<Integer>() {
-            @Override
-            public void onNext(Integer state) {
-                switch (state) {
-                    case Constants.SearchState.STATE_SEARCHING:
+                switch (track.lyric_status) {
+                    case Track.LyricStatus.SEARCHING:
                         mMainContainer.setVisibility(View.INVISIBLE);
                         mStateIndicator.setVisibility(View.VISIBLE);
                         mStateIndicator.setText(getResources().getString(R.string.searching));
                         break;
-                    case Constants.SearchState.STATE_COMPLETE:
+                    case Track.LyricStatus.FOUND:
                         mMainContainer.setVisibility(View.VISIBLE);
                         mStateIndicator.setVisibility(View.INVISIBLE);
+                        setLyric(track.lyric);
                         break;
-                    case Constants.SearchState.STATE_NOT_FOUND:
+                    case Track.LyricStatus.NOT_FOUND:
                         mMainContainer.setVisibility(View.INVISIBLE);
                         mStateIndicator.setVisibility(View.VISIBLE);
                         mStateIndicator.setText(getResources().getString(R.string.lyric_not_found));
                         break;
-                    case Constants.SearchState.STATE_ERROR:
+                    case Track.LyricStatus.ERROR:
                         mMainContainer.setVisibility(View.INVISIBLE);
                         mStateIndicator.setVisibility(View.VISIBLE);
                         mStateIndicator.setText(getResources().getString(R.string.search_error));
@@ -246,7 +212,7 @@ public class LyricsActivity extends Activity {
 
             @Override
             public void onComplete() {
-                Log.d(TAG, "search state subject complete");
+                Log.d(TAG, "current track subject complete");
             }
         }));
 

@@ -20,9 +20,12 @@ public class DBHelper extends SQLiteOpenHelper {
             TrackLyric.Entry.COLUMN_NAME_TRACK_REAL_ID + " INT, " +
             TrackLyric.Entry.COLUMN_NAME_TRACK_TITLE + " TEXT, " +
             TrackLyric.Entry.COLUMN_NAME_LYRIC + " TEXT, " +
+            TrackLyric.Entry.COLUMN_NAME_LYRIC_STATUS + " INT, " +
             TrackLyric.Entry.COLUMN_NAME_ALBUM + " TEXT, " +
             TrackLyric.Entry.COLUMN_NAME_ARTIST + " TEXT, " +
-            TrackLyric.Entry.COLUMN_NAME_DURATION + " INT)";
+            TrackLyric.Entry.COLUMN_NAME_DURATION + " INT, " +
+            TrackLyric.Entry.COLUMN_NAME_LAST_PLAYED_TIME + " INT, " +
+            TrackLyric.Entry.COLUMN_NAME_POSITION + " INT)";
 
     /**
      * drop track_lyric table
@@ -30,18 +33,9 @@ public class DBHelper extends SQLiteOpenHelper {
     private static final String SQL_DELETE_TRACK_LYRIC = "DROP TABLE IF EXISTS " + TrackLyric.Entry.TABLE_NAME;
 
 
-    /**
-     * create last played table
-     */
-    private static final String SQL_CREATE_LAST_PLAYED = "CREATE TABLE IF NOT EXISTS " + LastPlayed.Entry.TABLE_NAME + " (" +
-            LastPlayed.Entry._ID + " INTEGER PRIMARY KEY," +
-            LastPlayed.Entry.COLUMN_NAME_LAST_PLAYED_ID + " INT)";
-
-    private static final String SQL_DELETE_LAST_PLAYED = "DROP TABLE IF EXISTS " + LastPlayed.Entry.TABLE_NAME;
-
     private static final String DB_FILE_NAME = "track_lyric";
 
-    private static final int DB_VERSION = 2;
+    private static final int DB_VERSION = 3;
 
     private DBHelper(Context context, String name, SQLiteDatabase.CursorFactory factory, int version) {
         super(context, name, factory, version);
@@ -58,14 +52,12 @@ public class DBHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(SQL_CREATE_TRACK_LYRIC);
-        db.execSQL(SQL_CREATE_LAST_PLAYED);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // TODO: this upgrade policy need to complete
         db.execSQL(SQL_DELETE_TRACK_LYRIC);
-        db.execSQL(SQL_DELETE_LAST_PLAYED);
         onCreate(db);
     }
 }

@@ -14,15 +14,17 @@
         <activity
             android:name=".LyricsActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
-            android:launchMode="singleTask"
             android:label="@string/app_name"
+            android:launchMode="singleTask"
             android:theme="@style/FullscreenTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
             <intent-filter>
                 <action android:name="io.nya.powerlyrics.LYRIC_FOUND" />
+
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
@@ -34,7 +36,7 @@
             android:exported="true" />
 
         <receiver
-            android:name=".OnTrackChange"
+            android:name=".receiver.OnTrackChange"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
@@ -42,11 +44,19 @@
             </intent-filter>
         </receiver>
         <receiver
-            android:name=".OnStatusChange"
+            android:name=".receiver.OnStatusChange"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
                 <action android:name="com.maxmpz.audioplayer.STATUS_CHANGED" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".receiver.OnPositionSync"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.maxmpz.audioplayer.TPOS_SYNC" />
             </intent-filter>
         </receiver>
     </application>

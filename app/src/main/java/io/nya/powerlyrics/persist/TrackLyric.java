@@ -15,8 +15,11 @@ public final class TrackLyric {
         public static final String COLUMN_NAME_TRACK_REAL_ID = "track_real_id";
         public static final String COLUMN_NAME_TRACK_TITLE = "track_title";
         public static final String COLUMN_NAME_LYRIC = "lyric";
+        public static final String COLUMN_NAME_LYRIC_STATUS = "lyric_status";
         public static final String COLUMN_NAME_ALBUM = "album";
         public static final String COLUMN_NAME_ARTIST = "artist";
         public static final String COLUMN_NAME_DURATION = "duration";
+        public static final String COLUMN_NAME_LAST_PLAYED_TIME = "last_played_time";
+        public static final String COLUMN_NAME_POSITION = "position";
     }
 }

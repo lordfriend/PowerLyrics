@@ -20,8 +20,6 @@ import java.util.concurrent.Callable;
 import io.nya.powerlyrics.LyricApplication;
 import io.nya.powerlyrics.LyricsActivity;
 import io.nya.powerlyrics.R;
-import io.nya.powerlyrics.model.Constants;
-import io.nya.powerlyrics.model.LyricNotFoundException;
 import io.nya.powerlyrics.model.LyricResult;
 import io.nya.powerlyrics.model.PlayStatus;
 import io.nya.powerlyrics.model.SearchResult;
@@ -40,6 +38,7 @@ public class PlayService extends Service {
 
     public static final String ACTION_TRACK_CHANGED = "io.nya.powerlyrics.TRACK_CHANGED";
     public static final String ACTION_STATUS_CHANGED = "io.nya.powerlyrics.STATUS_CHANGED";
+    public static final String ACTION_FROM_LAUNCHER = "io.nya.powerlyrics.FROM_LAUNCHER";
 
     public static final String ACTION_LYRIC_FOUND = "io.nya.powerlyrics.LYRIC_FOUND";
     public static final String ACTION_LYRIC_NOT_FOUND = "io.nya.powerlyrics.LYRIC_NOT_FOUND";
@@ -51,14 +50,14 @@ public class PlayService extends Service {
 
     public PlayStatus mPlayStatus;
 
-    public String mCurrentLyric = null;
-
     private CompositeDisposable mDisposable = new CompositeDisposable();
     private Disposable mSearchLyricDisposable = null;
+
     private NeteaseCloud mLyricSource;
     private LyricStorage mLyricStorage;
     private LyricApplication mApp;
     private int mNotificationId = 0xff;
+
 
     @Override
     public void onCreate() {
@@ -66,10 +65,10 @@ public class PlayService extends Service {
         mLyricSource = new NeteaseCloud();
         mLyricStorage = new LyricStorage(DBHelper.getInstance(getApplicationContext()));
         mApp = (LyricApplication) getApplication();
-        Object[] result = mLyricStorage.getLastPlayed();
-        if (result != null) {
-            mCurrentTrack = (Track) result[0];
-            mCurrentLyric = result[1] == null ? null : (String) result[1];
+        // retrieve the last played track in case play don't broadcast the ACTION_TRACK_CHANGED event.
+        Track track = mLyricStorage.getLastPlayed();
+        if (track != null) {
+            mCurrentTrack = track;
         }
     }
 
@@ -81,43 +80,30 @@ public class PlayService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Bundle trackBundle;
         if (intent != null) {
             switch (intent.getAction()) {
                 case ACTION_TRACK_CHANGED:
-                    trackBundle = intent.getBundleExtra(PowerampAPI.TRACK);
-//                    Long ts = intent.getLongExtra("ts", System.currentTimeMillis());
-                    if (trackBundle != null) {
-                        long realId = trackBundle.getLong(PowerampAPI.Track.REAL_ID);
-                        if (mCurrentTrack == null) {
-                            mCurrentTrack = new Track();
-                        }
-                        if (realId != mCurrentTrack.realId) {
-                            mCurrentTrack = createTrack(trackBundle);
-                            mApp.mCurrentTrackSubject.onNext(mCurrentTrack);
-                            searchTrackLyric();
-                        }
-                    }
+                    findAndUpdateTrack(intent);
                     break;
                 case ACTION_STATUS_CHANGED:
                     mPlayStatus = new PlayStatus();
                     mPlayStatus.status = intent.getIntExtra(PowerampAPI.STATUS, PowerampAPI.Status.TRACK_PLAYING);
                     if (mPlayStatus.status == PowerampAPI.Status.TRACK_PLAYING) {
                         mPlayStatus.isPaused = intent.getBooleanExtra(PowerampAPI.PAUSED, false);
-                        trackBundle = intent.getBundleExtra(PowerampAPI.TRACK);
-                        Log.d(LOG_TAG, "trackBundle is null: " + (trackBundle == null));
-                        if (trackBundle != null) {
-                            Track track = createTrack(trackBundle);
-                            if (track.id != mCurrentTrack.id && track.realId != mCurrentTrack.realId) {
-                                mCurrentTrack = track;
-                                mApp.mCurrentTrackSubject.onNext(mCurrentTrack);
-                            }
-                        }
+                        findAndUpdateTrack(intent);
                         createNotification();
                     } else if (mPlayStatus.status == PowerampAPI.Status.PLAYING_ENDED) {
                         removeNotification();
                     }
                     mApp.mStatusSubject.onNext(mPlayStatus);
+                    break;
+                case ACTION_FROM_LAUNCHER:
+                    if (mCurrentTrack != null) {
+                        mApp.mCurrentTrackSubject.onNext(mCurrentTrack);
+                        if (mCurrentTrack.lyric_status == Track.LyricStatus.ERROR || mCurrentTrack.lyric_status == Track.LyricStatus.SEARCHING) {
+                            searchTrackLyric(mCurrentTrack);
+                        }
+                    }
                     break;
                 default:
                     // Do nothing
@@ -126,14 +112,33 @@ public class PlayService extends Service {
         return START_STICKY;
     }
 
+    /**
+     * try to find track from intent
+     *
+     * @param intent
+     */
+    private void findAndUpdateTrack(Intent intent) {
+        Bundle trackBundle = intent.getBundleExtra(PowerampAPI.TRACK);
+//                    Long ts = intent.getLongExtra("ts", System.currentTimeMillis());
+        if (trackBundle != null) {
+            Track track = createTrack(trackBundle);
+            if ((mCurrentTrack == null) || (track.id != mCurrentTrack.id && track.realId != mCurrentTrack.realId)) {
+                mCurrentTrack = track;
+                mApp.mCurrentTrackSubject.onNext(mCurrentTrack);
+                searchTrackLyric(track);
+            }
+        }
+    }
+
     private Track createTrack(Bundle trackBundle) {
         Track track = new Track();
         track.id = trackBundle.getLong(PowerampAPI.Track.ID);
         track.realId = trackBundle.getLong(PowerampAPI.Track.REAL_ID);
-        track.dur = trackBundle.getInt(PowerampAPI.Track.DURATION) * 1000;
+        track.dur = trackBundle.getLong(PowerampAPI.Track.DURATION);
         track.title = trackBundle.getString(PowerampAPI.Track.TITLE);
         track.album = trackBundle.getString(PowerampAPI.Track.ALBUM);
         track.artist = trackBundle.getString(PowerampAPI.Track.ARTIST);
+        track.pos = trackBundle.getLong(PowerampAPI.Track.POSITION);
         return track;
     }
 
@@ -145,12 +150,12 @@ public class PlayService extends Service {
         if (mCurrentTrack == null) {
             return;
         }
-        boolean lyricFound = mCurrentLyric != null;
+        boolean lyricFound = mCurrentTrack.lyric != null;
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle(mCurrentTrack.title)
-                .setContentText(lyricFound ? getResources().getText(R.string.lyric_found): getResources().getText(R.string.lyric_not_found));
+                .setContentText(lyricFound ? getResources().getText(R.string.lyric_found) : getResources().getText(R.string.lyric_not_found));
 
         Intent resultIntent = new Intent(this, LyricsActivity.class);
         if (lyricFound) {
@@ -180,13 +185,13 @@ public class PlayService extends Service {
     private int matchSong(SearchResult.Song[] songs) throws IOException {
         int sourceSongId = -1;
 
-        for (SearchResult.Song song: songs) {
+        for (SearchResult.Song song : songs) {
             if (song.album != null && song.album.name != null && song.album.name.equals(mCurrentTrack.album)) {
                 sourceSongId = song.id;
                 break;
             }
             if (song.artists != null) {
-                for (SearchResult.Artist artist: song.artists) {
+                for (SearchResult.Artist artist : song.artists) {
                     if (artist.name != null && artist.name.equals(mCurrentTrack.artist)) {
                         sourceSongId = song.id;
                         break;
@@ -202,7 +207,7 @@ public class PlayService extends Service {
         int limit = NeteaseCloud.DEFAULT_LIMIT;
         int sourceSongId = -1;
         int total = Integer.MAX_VALUE;
-        while(sourceSongId == -1 && (offset + 1) * limit < total) {
+        while (sourceSongId == -1 && (offset + 1) * limit < total) {
             SearchResult result = mLyricSource.searchMusic(mCurrentTrack.title, offset, limit);
             sourceSongId = matchSong(result.songs);
             total = result.songCount;
@@ -218,47 +223,53 @@ public class PlayService extends Service {
         return null;
     }
 
-    private void searchTrackLyric() {
-        Log.d(LOG_TAG, "current track: " + mCurrentTrack.title);
-        mCurrentLyric = null;
-        mApp.mSearchStateSubject.onNext(Constants.SearchState.STATE_SEARCHING);
+    private void searchTrackLyric(final Track untouchedTrack) {
+        // track is touched, skip it
+        if (untouchedTrack.lyric_status == Track.LyricStatus.FOUND || untouchedTrack.lyric_status == Track.LyricStatus.NOT_FOUND) {
+            return;
+        }
         // remove the former task
         if (mSearchLyricDisposable != null) {
             mDisposable.remove(mSearchLyricDisposable);
         }
         mSearchLyricDisposable = Observable
-                .fromCallable(new Callable<String>() {
+                .fromCallable(new Callable<Track>() {
                     @Override
-                    public String call() throws Exception {
-                        try {
-                            // query the saved lyric from storage.
-                            String lyric = mLyricStorage.getLyricByTrackId(mCurrentTrack.realId);
-                            if (lyric == null) {
-                                // no lyric found. query from lyric source
-                                lyric = searchLyricFromSource();
-                                // save this lyric
-                                mLyricStorage.saveLyricAndTrack(mCurrentTrack, lyric);
-                            }
-                            mLyricStorage.saveLastPlayed(mCurrentTrack.id);
-                            if (lyric == null) {
-                                throw new LyricNotFoundException();
-                            }
-                            return lyric;
-                        } catch (InterruptedIOException e) {
-                            Log.d(LOG_TAG, "cancelled");
-                            return "";
+                    public Track call() throws Exception {
+                        // query the saved lyric from storage.
+                        Track track = mLyricStorage.getTrackById(untouchedTrack.realId);
+                        if (track == null) {
+                            track = untouchedTrack.clone();
+                            mLyricStorage.saveTrack(track);
                         }
+                        if (track.lyric == null) {
+                            // no lyric found. query from lyric source
+                            try {
+                                track.lyric = searchLyricFromSource();
+                                if (track.lyric == null) {
+                                    track.lyric_status = Track.LyricStatus.NOT_FOUND;
+                                } else {
+                                    track.lyric_status = Track.LyricStatus.FOUND;
+                                }
+                            } catch (InterruptedIOException e) {
+                                Log.d(LOG_TAG, "cancelled");
+                                track.lyric_status = Track.LyricStatus.SEARCHING;
+                            } catch (IOException e) {
+                                track.lyric_status = Track.LyricStatus.ERROR;
+                            }
+                            mLyricStorage.saveTrack(track);
+                        }
+                        return track;
                     }
                 })
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribeWith(new DisposableObserver<String>() {
+                .subscribeWith(new DisposableObserver<Track>() {
                     @Override
-                    public void onNext(String s) {
-//                        Log.d(LOG_TAG, "lyric is: " + s);
-                        mCurrentLyric = s;
-                        mApp.mCurrentLyricSubject.onNext(s);
-                        mApp.mSearchStateSubject.onNext(Constants.SearchState.STATE_COMPLETE);
+                    public void onNext(Track track) {
+                        if (mCurrentTrack.id == track.id) {
+                            mApp.mCurrentTrackSubject.onNext(track);
+                        }
                         if (mPlayStatus.status == PowerampAPI.Status.TRACK_PLAYING) {
                             createNotification();
                         }
@@ -267,16 +278,6 @@ public class PlayService extends Service {
                     @Override
                     public void onError(Throwable e) {
                         Log.e(LOG_TAG, e.toString());
-                        mCurrentLyric = null;
-                        if (e instanceof LyricNotFoundException) {
-                            mApp.mCurrentLyricSubject.onNext("");
-                            mApp.mSearchStateSubject.onNext(Constants.SearchState.STATE_NOT_FOUND);
-                            if (mPlayStatus.status == PowerampAPI.Status.TRACK_PLAYING) {
-                                createNotification();
-                            }
-                        } else {
-                            mApp.mSearchStateSubject.onNext(Constants.SearchState.STATE_ERROR);
-                        }
                     }
 
                     @Override

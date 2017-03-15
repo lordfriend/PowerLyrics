@@ -1,4 +1,4 @@
-package io.nya.powerlyrics;
+package io.nya.powerlyrics.receiver;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -10,6 +10,8 @@ import com.maxmpz.poweramp.player.PowerampAPI;
 import io.nya.powerlyrics.service.PlayService;
 
 public class OnStatusChange extends BroadcastReceiver {
+
+    private static final String TAG = OnStatusChange.class.getName();
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -26,9 +28,9 @@ public class OnStatusChange extends BroadcastReceiver {
         if (status == PowerampAPI.Status.TRACK_ENDED) {
             serviceIntent.putExtra(PowerampAPI.FAILED, intent.getBooleanExtra(PowerampAPI.FAILED, false));
         }
-        Log.e("status receiver", "status: " + status + ", paused: " + intent.getBooleanExtra(PowerampAPI.PAUSED, false) + ", track is null: " + intent.getBundleExtra(PowerampAPI.TRACK));
-        if (status != -1) {
-            context.startService(serviceIntent);
-        }
+        Log.e(TAG, "status: " + status + ", paused: " + intent.getBooleanExtra(PowerampAPI.PAUSED, false) + ", track is null: " + intent.getBundleExtra(PowerampAPI.TRACK));
+//        if (status != -1) {
+//            context.startService(serviceIntent);
+//        }
     }
 }
