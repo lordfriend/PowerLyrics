@@ -18,8 +18,8 @@ public class LyricParser {
     private static final String LOG_TAG = LyricParser.class.getName();
 
     private static final String ID_TAG_PATTERN = "\\[([a-z]+):(.+)\\]";
-    private static final String LYRIC_PATTERN = "(\\[\\d{2}:[0-5][0-9].\\d{2}\\])(.*)";
-    private static final String TIMESTAMP_PATTERN = "\\[(\\d{2}):([0-5][0-9]).(\\d{2})\\]";
+    private static final String LYRIC_PATTERN = "(\\[\\d{2}:[0-5][0-9].\\d{2,3}\\])(.*)";
+    private static final String TIMESTAMP_PATTERN = "\\[(\\d{2}):([0-5][0-9]).(\\d{2,3})\\]";
 
     private static boolean isIdTag(String line) {
         return line.matches(ID_TAG_PATTERN);

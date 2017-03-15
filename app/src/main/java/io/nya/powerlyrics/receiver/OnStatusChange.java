@@ -19,7 +19,7 @@ public class OnStatusChange extends BroadcastReceiver {
         serviceIntent.setAction(PlayService.ACTION_STATUS_CHANGED);
         int status = intent.getIntExtra(PowerampAPI.STATUS, -1);
         serviceIntent.putExtra(PowerampAPI.STATUS, status);
-        if (status == PowerampAPI.Status.TRACK_PLAYING) {
+        if (status == PowerampAPI.Status.TRACK_PLAYING || status == PowerampAPI.Status.TRACK_ENDED) {
             serviceIntent.putExtra(PowerampAPI.PAUSED, intent.getBooleanExtra(PowerampAPI.PAUSED, false));
         }
         if (status == PowerampAPI.Status.TRACK_PLAYING || status == PowerampAPI.Status.TRACK_ENDED) {

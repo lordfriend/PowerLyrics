@@ -204,6 +204,9 @@ public class PlayService extends Service {
 
     private int matchSong(SearchResult.Song[] songs) throws IOException {
         int sourceSongId = -1;
+        if (songs == null) {
+            return sourceSongId;
+        }
 
         for (SearchResult.Song song : songs) {
             if (song.album != null && song.album.name != null && song.album.name.equals(mCurrentTrack.album)) {
@@ -229,8 +232,11 @@ public class PlayService extends Service {
         int total = Integer.MAX_VALUE;
         while (sourceSongId == -1 && (offset + 1) * limit < total) {
             SearchResult result = mLyricSource.searchMusic(mCurrentTrack.title, offset, limit);
-            sourceSongId = matchSong(result.songs);
             total = result.songCount;
+            if (total == 0) {
+                return null;
+            }
+            sourceSongId = matchSong(result.songs);
             offset++;
         }
 

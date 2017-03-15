@@ -23,10 +23,12 @@ import io.nya.powerlyrics.model.Track;
 import io.nya.powerlyrics.service.PlayService;
 import io.nya.powerlyrics.view.LyricView;
 import io.reactivex.Observable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Function;
 import io.reactivex.functions.Predicate;
+import io.reactivex.observables.ConnectableObservable;
 import io.reactivex.observers.DisposableObserver;
 
 
@@ -45,6 +47,7 @@ public class LyricsActivity extends Activity {
 
     private LyricApplication mApp;
     private CompositeDisposable mDisposable = new CompositeDisposable();
+
     private Track mCurrentTrack;
     private long mCurrentTrackPos;
     private long mLastSyncTimestamp;
@@ -74,26 +77,31 @@ public class LyricsActivity extends Activity {
         // immediately sync the position of track.
         startService(PowerampAPI.newAPIIntent().putExtra(PowerampAPI.COMMAND, PowerampAPI.Commands.POS_SYNC));
 
-        mDisposable.add(Observable.interval(DEFAULT_INTERVAL, TimeUnit.MILLISECONDS)
-                .mergeWith(mApp.mStatusSubject.map(new Function<PlayStatus, Long>() {
+        mDisposable.add(mApp.mStatusSubject
+                .map(new Function<PlayStatus, Long>() {
                     @Override
                     public Long apply(@NonNull PlayStatus status) throws Exception {
+                        Log.d(TAG, "playStatus: " + mPlayStatus);
                         mPlayStatus = status;
                         return 0L;
                     }
-                }))
+                })
+                .mergeWith(Observable.interval(DEFAULT_INTERVAL, TimeUnit.MILLISECONDS))
                 .filter(new Predicate<Long>() {
                     @Override
                     public boolean test(@NonNull Long aLong) throws Exception {
+                        Log.d(TAG, "predicate result: " + (mPlayStatus != null && mPlayStatus.status == PowerampAPI.Status.TRACK_PLAYING && !mPlayStatus.isPaused));
                         return mPlayStatus != null && mPlayStatus.status == PowerampAPI.Status.TRACK_PLAYING && !mPlayStatus.isPaused;
                     }
                 })
                 .map(new Function<Long, Long>() {
                     @Override
                     public Long apply(@NonNull Long aLong) throws Exception {
+                        Log.d(TAG, "pos=" + (System.currentTimeMillis() - mLastSyncTimestamp + mCurrentTrackPos));
                         return System.currentTimeMillis() - mLastSyncTimestamp + mCurrentTrackPos;
                     }
                 })
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribeWith(new DisposableObserver<Long>() {
                     @Override
                     public void onNext(Long pos) {
@@ -158,6 +166,7 @@ public class LyricsActivity extends Activity {
         mLyricView = (LyricView) findViewById(R.id.lyric_view);
         mTrackTitleView = (TextView) findViewById(R.id.track_title);
         handleIntent(getIntent());
+        Log.w(TAG, "onCreate app id: " + (Math.random() * 1000));
     }
 
     @Override
@@ -173,10 +182,12 @@ public class LyricsActivity extends Activity {
 
     @Override
     protected void onResume() {
+        Log.w(TAG, "onResume");
         mDisposable.add(mApp.mCurrentTrackSubject.subscribeWith(new DisposableObserver<Track>() {
             @Override
             public void onNext(Track track) {
                 mCurrentTrack = track;
+                Log.d(TAG, "track is " + track.toString());
                 setTitle(track.title);
                 mTrackTitleView.setText(track.title);
                 switch (track.lyric_status) {
@@ -188,6 +199,7 @@ public class LyricsActivity extends Activity {
                     case Track.LyricStatus.FOUND:
                         mMainContainer.setVisibility(View.VISIBLE);
                         mStateIndicator.setVisibility(View.INVISIBLE);
+                        Log.d(TAG, track.lyric);
                         setLyric(track.lyric);
                         break;
                     case Track.LyricStatus.NOT_FOUND:
@@ -222,6 +234,7 @@ public class LyricsActivity extends Activity {
 
     @Override
     protected void onPause() {
+        Log.w(TAG, "on pause");
         mDisposable.dispose();
         stopTrackPlayerStatus();
         super.onPause();
@@ -229,6 +242,7 @@ public class LyricsActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        Log.w(TAG, "onDestroy");
         mApp = null;
         super.onDestroy();
     }

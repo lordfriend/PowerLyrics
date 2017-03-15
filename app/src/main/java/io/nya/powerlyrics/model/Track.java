@@ -38,4 +38,9 @@ public class Track {
         newObj.lyric_status = lyric_status;
         return newObj;
     }
+
+    @Override
+    public String toString() {
+        return "#" + id + "(" + realId + ") \"" + title + "\" duration=" + dur + " album=\"" + album + "\" artist=\"" + artist + "\"";
+    }
 }

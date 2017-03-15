@@ -51,14 +51,6 @@
                 <action android:name="com.maxmpz.audioplayer.STATUS_CHANGED" />
             </intent-filter>
         </receiver>
-        <receiver
-            android:name=".receiver.OnPositionSync"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="com.maxmpz.audioplayer.TPOS_SYNC" />
-            </intent-filter>
-        </receiver>
     </application>
 
 </manifest>
