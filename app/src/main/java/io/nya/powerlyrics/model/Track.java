@@ -14,6 +14,7 @@ public class Track {
     public long pos;
     public long last_played_time;
     public String lyric;
+    public String tlyric;
     public int lyric_status = LyricStatus.SEARCHING;
 
     public static final class LyricStatus {
@@ -35,6 +36,7 @@ public class Track {
         newObj.pos = pos;
         newObj.last_played_time = last_played_time;
         newObj.lyric = lyric;
+        newObj.tlyric = tlyric;
         newObj.lyric_status = lyric_status;
         return newObj;
     }

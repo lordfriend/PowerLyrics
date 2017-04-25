@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0099cc"
+    android:background="#002633"
     tools:context="io.nya.powerlyrics.LyricsActivity">
 
     <!-- The primary full-screen view. This can be replaced with whatever view

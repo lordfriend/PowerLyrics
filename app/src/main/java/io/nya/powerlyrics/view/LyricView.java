@@ -8,6 +8,7 @@ import android.support.annotation.Nullable;
 import android.text.StaticLayout;
 import android.text.TextPaint;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 import android.widget.Scroller;
@@ -162,6 +163,7 @@ public class LyricView extends View {
         if (mSmoothScrollbarEnabled == null) {
             mSmoothScrollbarEnabled = new SmoothScrollRunnable();
         }
+        Log.d(TAG, "position: " + position);
         if (direction.equals("up")) {
             mSmoothScrollbarEnabled.startScroll(-delta);
         } else {

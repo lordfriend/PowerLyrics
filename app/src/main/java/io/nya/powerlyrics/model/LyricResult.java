@@ -30,4 +30,9 @@ public class LyricResult {
 //    Lrc klyric;
     public Lrc tlyric;
     public int code;
+
+    @Override
+    public String toString() {
+        return "lrc: "  + (lrc == null ? "null": lrc.lyric.substring(0, 5)) + ", tlyric: {" + tlyric + (tlyric == null ? "null": "{lrc: " + tlyric.lyric.substring(0, 5) + "}");
+    }
 }

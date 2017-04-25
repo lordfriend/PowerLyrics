@@ -85,6 +85,7 @@ public class PlayService extends Service {
             switch (intent.getAction()) {
                 case ACTION_TRACK_CHANGED:
                     findAndUpdateTrack(intent);
+                    createNotification();
                     break;
                 case ACTION_STATUS_CHANGED:
                     mPlayStatus = new PlayStatus();
@@ -225,7 +226,7 @@ public class PlayService extends Service {
         return sourceSongId;
     }
 
-    private String searchLyricFromSource() throws IOException {
+    private LyricResult searchLyricFromSource() throws IOException {
         int offset = 0;
         int limit = NeteaseCloud.DEFAULT_LIMIT;
         int sourceSongId = -1;
@@ -241,10 +242,7 @@ public class PlayService extends Service {
         }
 
         if (sourceSongId != -1) {
-            LyricResult lyricResult = mLyricSource.getLyric(sourceSongId);
-            if (lyricResult != null && lyricResult.lrc != null) {
-                return lyricResult.lrc.lyric;
-            }
+            return mLyricSource.getLyric(sourceSongId);
         }
         return null;
     }
@@ -271,8 +269,15 @@ public class PlayService extends Service {
                         if (track.lyric == null) {
                             // no lyric found. query from lyric source
                             try {
-                                track.lyric = searchLyricFromSource();
-                                if (track.lyric == null) {
+                                LyricResult lyricResult = searchLyricFromSource();
+                                Log.d(LOG_TAG, "lyricResult: " + (lyricResult == null ? "null" : lyricResult.toString()));
+                                if (lyricResult != null && lyricResult.lrc != null) {
+                                    track.lyric = lyricResult.lrc.lyric;
+                                }
+                                if (lyricResult != null && lyricResult.tlyric != null) {
+                                    track.tlyric = lyricResult.tlyric.lyric;
+                                }
+                                if (track.lyric == null && track.tlyric == null) {
                                     track.lyric_status = Track.LyricStatus.NOT_FOUND;
                                 } else {
                                     track.lyric_status = Track.LyricStatus.FOUND;

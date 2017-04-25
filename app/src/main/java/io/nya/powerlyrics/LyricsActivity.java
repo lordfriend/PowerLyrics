@@ -161,7 +161,11 @@ public class LyricsActivity extends Activity {
                         mMainContainer.setVisibility(View.VISIBLE);
                         mStateIndicator.setVisibility(View.INVISIBLE);
                         Log.d(TAG, track.lyric);
-                        setLyric(track.lyric);
+                        if (track.tlyric == null) {
+                            setLyric(track.lyric);
+                        } else {
+                            setLyric(track.tlyric);
+                        }
                         startTrackPosition();
                         break;
                     case Track.LyricStatus.NOT_FOUND:
@@ -221,6 +225,7 @@ public class LyricsActivity extends Activity {
     protected void onPause() {
         Log.w(TAG, "on pause");
         mDisposable.dispose();
+        stopTrackPosition();
         unregisterReceiver(mTrackPosSyncReceiver);
         super.onPause();
     }

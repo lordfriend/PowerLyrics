@@ -20,6 +20,7 @@ public class DBHelper extends SQLiteOpenHelper {
             TrackLyric.Entry.COLUMN_NAME_TRACK_REAL_ID + " INT, " +
             TrackLyric.Entry.COLUMN_NAME_TRACK_TITLE + " TEXT, " +
             TrackLyric.Entry.COLUMN_NAME_LYRIC + " TEXT, " +
+            TrackLyric.Entry.COLUMN_NAME_TLYRIC + " TEXT, " +
             TrackLyric.Entry.COLUMN_NAME_LYRIC_STATUS + " INT, " +
             TrackLyric.Entry.COLUMN_NAME_ALBUM + " TEXT, " +
             TrackLyric.Entry.COLUMN_NAME_ARTIST + " TEXT, " +

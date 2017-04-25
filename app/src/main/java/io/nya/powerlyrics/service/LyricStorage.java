@@ -4,6 +4,8 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+import com.maxmpz.poweramp.player.PowerampAPI;
+
 import io.nya.powerlyrics.model.Track;
 import io.nya.powerlyrics.persist.DBHelper;
 import io.nya.powerlyrics.persist.TrackLyric;
@@ -26,6 +28,7 @@ public class LyricStorage {
                 TrackLyric.Entry.COLUMN_NAME_TRACK_REAL_ID,
                 TrackLyric.Entry.COLUMN_NAME_TRACK_TITLE,
                 TrackLyric.Entry.COLUMN_NAME_LYRIC,
+                TrackLyric.Entry.COLUMN_NAME_TLYRIC,
                 TrackLyric.Entry.COLUMN_NAME_LYRIC_STATUS,
                 TrackLyric.Entry.COLUMN_NAME_ALBUM,
                 TrackLyric.Entry.COLUMN_NAME_ARTIST,
@@ -49,6 +52,7 @@ public class LyricStorage {
             track.artist = cursor.getString(cursor.getColumnIndex(TrackLyric.Entry.COLUMN_NAME_ARTIST));
             track.dur = cursor.getLong(cursor.getColumnIndex(TrackLyric.Entry.COLUMN_NAME_DURATION));
             track.lyric = cursor.getString(cursor.getColumnIndex(TrackLyric.Entry.COLUMN_NAME_LYRIC));
+            track.tlyric = cursor.getString(cursor.getColumnIndex(TrackLyric.Entry.COLUMN_NAME_TLYRIC));
             track.lyric_status = cursor.getInt(cursor.getColumnIndex(TrackLyric.Entry.COLUMN_NAME_LYRIC_STATUS));
             track.last_played_time = cursor.getLong(cursor.getColumnIndex(TrackLyric.Entry.COLUMN_NAME_LAST_PLAYED_TIME));
             track.pos = cursor.getLong(cursor.getColumnIndex(TrackLyric.Entry.COLUMN_NAME_POSITION));
@@ -64,6 +68,7 @@ public class LyricStorage {
         values.put(TrackLyric.Entry.COLUMN_NAME_TRACK_REAL_ID, track.realId);
         values.put(TrackLyric.Entry.COLUMN_NAME_TRACK_TITLE, track.title);
         values.put(TrackLyric.Entry.COLUMN_NAME_LYRIC, track.lyric);
+        values.put(TrackLyric.Entry.COLUMN_NAME_TLYRIC, track.tlyric);
         values.put(TrackLyric.Entry.COLUMN_NAME_LYRIC_STATUS, track.lyric_status);
         values.put(TrackLyric.Entry.COLUMN_NAME_ALBUM, track.album);
         values.put(TrackLyric.Entry.COLUMN_NAME_ARTIST, track.artist);
@@ -81,6 +86,7 @@ public class LyricStorage {
                 TrackLyric.Entry.COLUMN_NAME_TRACK_REAL_ID,
                 TrackLyric.Entry.COLUMN_NAME_TRACK_TITLE,
                 TrackLyric.Entry.COLUMN_NAME_LYRIC,
+                TrackLyric.Entry.COLUMN_NAME_TLYRIC,
                 TrackLyric.Entry.COLUMN_NAME_LYRIC_STATUS,
                 TrackLyric.Entry.COLUMN_NAME_ALBUM,
                 TrackLyric.Entry.COLUMN_NAME_ARTIST,
@@ -105,6 +111,7 @@ public class LyricStorage {
         track.artist = cursor.getString(cursor.getColumnIndex(TrackLyric.Entry.COLUMN_NAME_ARTIST));
         track.dur = cursor.getLong(cursor.getColumnIndex(TrackLyric.Entry.COLUMN_NAME_DURATION));
         track.lyric = cursor.getString(cursor.getColumnIndex(TrackLyric.Entry.COLUMN_NAME_LYRIC));
+        track.tlyric = cursor.getString(cursor.getColumnIndex(TrackLyric.Entry.COLUMN_NAME_TLYRIC));
         track.lyric_status = cursor.getInt(cursor.getColumnIndex(TrackLyric.Entry.COLUMN_NAME_LYRIC_STATUS));
         track.last_played_time = cursor.getLong(cursor.getColumnIndex(TrackLyric.Entry.COLUMN_NAME_LAST_PLAYED_TIME));
         track.pos = cursor.getLong(cursor.getColumnIndex(TrackLyric.Entry.COLUMN_NAME_POSITION));
