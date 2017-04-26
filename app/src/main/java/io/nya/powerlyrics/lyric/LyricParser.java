@@ -21,8 +21,9 @@ public class LyricParser {
     private static final String LOG_TAG = LyricParser.class.getName();
 
     private static final String ID_TAG_PATTERN = "\\[([a-z]+):(.+)\\]";
-    private static final String LYRIC_PATTERN = "(\\[\\d{2}:[0-5][0-9].\\d{2,3}\\])(.*)";
+    private static final String LYRIC_PATTERN = "(\\[\\d{2}:[0-5][0-9](?:.\\d{2,3})?\\])(.*)";
     private static final String TIMESTAMP_PATTERN = "\\[(\\d{2}):([0-5][0-9]).(\\d{2,3})\\]";
+    private static final String SIMPLE_TIMESTAMP_PATTERN = "\\[(\\d{2}):([0-5][0-9])\\]";
 
     private static boolean isIdTag(String line) {
         return line.matches(ID_TAG_PATTERN);
@@ -30,6 +31,28 @@ public class LyricParser {
 
     private static boolean isLyric(String line) {
         return line.matches(LYRIC_PATTERN);
+    }
+
+    private static long parseTimestamp(String timestampStr) {
+        if (timestampStr.matches(TIMESTAMP_PATTERN)) {
+            Pattern timestampPattern = Pattern.compile(TIMESTAMP_PATTERN);
+            Matcher timestampMatcher = timestampPattern.matcher(timestampStr);
+            timestampMatcher.find();
+            long timestampValue = (Long.parseLong(timestampMatcher.group(1)) * 60L +  Long.parseLong(timestampMatcher.group(2))) * 1000L;
+            if(timestampMatcher.group(3).length() == 3) {
+                timestampValue += Long.parseLong(timestampMatcher.group(3));
+            } else {
+                timestampValue += Long.parseLong(timestampMatcher.group(3)) * 10L;
+            }
+            return timestampValue;
+        } else if (timestampStr.matches(SIMPLE_TIMESTAMP_PATTERN)) {
+            Pattern simpleTimestampPattern = Pattern.compile(SIMPLE_TIMESTAMP_PATTERN);
+            Matcher timestampMatcher = simpleTimestampPattern.matcher(timestampStr);
+            timestampMatcher.find();
+            return (Long.parseLong(timestampMatcher.group(1)) * 60L +  Long.parseLong(timestampMatcher.group(2))) * 1000L;
+        } else {
+            return -1;
+        }
     }
 
     /**
@@ -43,10 +66,7 @@ public class LyricParser {
         Matcher matcher = lyricPattern.matcher(line);
         if (matcher.find()) {
             LyricEntry entry = new LyricEntry();
-            Pattern timestampPattern = Pattern.compile(TIMESTAMP_PATTERN);
-            Matcher timestampMatcher = timestampPattern.matcher(matcher.group(1));
-            timestampMatcher.find();
-            entry.timestamp = (Long.parseLong(timestampMatcher.group(1)) * 60L +  Long.parseLong(timestampMatcher.group(2))) * 1000L + Long.parseLong(timestampMatcher.group(3)) * 10L;
+            entry.timestamp = parseTimestamp(matcher.group(1));
             entryList.add(entry);
             return getLyricEntry(entryList, matcher.group(2));
         }

@@ -13,7 +13,6 @@ import android.util.TypedValue;
 import android.view.View;
 import android.widget.Scroller;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 import io.nya.powerlyrics.R;
@@ -165,13 +164,11 @@ public class LyricView extends View {
             }
             delta += mItemMargin;
         }
-        Log.d(TAG, "position: " + position + ", direction: " + direction + ", endPos" + endPos);
 
         mCurrentPosition = position;
         if (mSmoothScrollbarEnabled == null) {
             mSmoothScrollbarEnabled = new SmoothScrollRunnable();
         }
-        Log.d(TAG, "position: " + position);
         if (direction.equals("up")) {
             mSmoothScrollbarEnabled.startScroll(-delta);
         } else {

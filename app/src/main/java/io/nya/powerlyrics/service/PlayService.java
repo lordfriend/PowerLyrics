@@ -267,7 +267,7 @@ public class PlayService extends Service {
                             track = untouchedTrack.clone();
                             mLyricStorage.saveTrack(track);
                         }
-                        if (track.lyric == null) {
+                        if (track.lyric == null && track.tlyric == null) {
                             // no lyric found. query from lyric source
                             try {
                                 LyricResult lyricResult = searchLyricFromSource();

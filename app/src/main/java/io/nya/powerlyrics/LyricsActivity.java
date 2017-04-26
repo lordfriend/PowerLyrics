@@ -87,7 +87,7 @@ public class LyricsActivity extends Activity {
         mHandler.removeCallbacks(mTickRunnable);
     }
 
-    private void setLyric(Track track) {
+    private boolean setLyric(Track track) {
         try {
             Lyric lyric;
             if (track.tlyric == null) {
@@ -95,15 +95,18 @@ public class LyricsActivity extends Activity {
             } else {
                 lyric = LyricParser.parse(track.lyric, track.tlyric);
             }
-
-            mLyricView.setLyric(lyric);
-            mLyricView.setDuration(mCurrentTrack.dur);
+            if (lyric.size() > 0) {
+                mLyricView.setLyric(lyric);
+                mLyricView.setDuration(mCurrentTrack.dur);
+                return true;
+            }
         } catch (IOException e) {
             mMainContainer.setVisibility(View.INVISIBLE);
             mStateIndicator.setVisibility(View.VISIBLE);
             mStateIndicator.setText(getResources().getString(R.string.lrc_parse_error));
             e.printStackTrace();
         }
+        return false;
     }
 
     private void handleIntent(Intent intent) {
@@ -166,8 +169,9 @@ public class LyricsActivity extends Activity {
                     case Track.LyricStatus.FOUND:
                         mMainContainer.setVisibility(View.VISIBLE);
                         mStateIndicator.setVisibility(View.INVISIBLE);
-                        setLyric(track);
-                        startTrackPosition();
+                        if (setLyric(track)) {
+                            startTrackPosition();
+                        }
                         break;
                     case Track.LyricStatus.NOT_FOUND:
                         mMainContainer.setVisibility(View.INVISIBLE);
