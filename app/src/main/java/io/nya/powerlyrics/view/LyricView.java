@@ -210,6 +210,8 @@ public class LyricView extends View {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         int containerWidth = MeasureSpec.getSize(widthMeasureSpec);
         mMiddleY = MeasureSpec.getSize(heightMeasureSpec) / 2;
+        mCurrentPosition = INVALID_POSITION;
+        setScrollY(0);
         if (mLyric != null) {
             mLayoutList = new ArrayList<>();
             mHighlightLayoutList = new ArrayList<>();

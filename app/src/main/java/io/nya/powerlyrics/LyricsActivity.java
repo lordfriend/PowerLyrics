@@ -201,10 +201,11 @@ public class LyricsActivity extends Activity {
             }
         }));
         mDisposable.add(mApp.mStatusSubject
-                .observeOn(AndroidSchedulers.mainThread())
+//                .observeOn(AndroidSchedulers.mainThread())
                 .subscribeWith(new DisposableObserver<PlayStatus>() {
                     @Override
                     public void onNext(PlayStatus playStatus) {
+                        Log.d(TAG, "playStatus: " + playStatus);
                         if (playStatus.status == PowerampAPI.Status.TRACK_PLAYING && !playStatus.isPaused) {
                             startTrackPosition();
                         } else {
@@ -229,7 +230,7 @@ public class LyricsActivity extends Activity {
     @Override
     protected void onPause() {
         Log.w(TAG, "on pause");
-        mDisposable.dispose();
+        mDisposable.clear();
         stopTrackPosition();
         unregisterReceiver(mTrackPosSyncReceiver);
         super.onPause();

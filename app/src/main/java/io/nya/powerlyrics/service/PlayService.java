@@ -126,7 +126,7 @@ public class PlayService extends Service {
             Track track = createTrack(trackBundle);
             if ((mCurrentTrack == null) || (track.id != mCurrentTrack.id && track.realId != mCurrentTrack.realId)) {
                 mCurrentTrack = track;
-                mApp.mCurrentTrackSubject.onNext(mCurrentTrack);
+                mApp.mCurrentTrackSubject.onNext(track);
                 searchTrackLyric(track);
             }
         }
@@ -271,7 +271,7 @@ public class PlayService extends Service {
                             // no lyric found. query from lyric source
                             try {
                                 LyricResult lyricResult = searchLyricFromSource();
-                                Log.d(LOG_TAG, "lyricResult: " + (lyricResult == null ? "null" : lyricResult.toString()));
+
                                 if (lyricResult != null && lyricResult.lrc != null) {
                                     track.lyric = lyricResult.lrc.lyric;
                                 }
