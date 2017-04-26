@@ -26,7 +26,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".LyricChooserActivy" />
+        <activity android:name=".LyricChooserActivity" />
 
         <service
             android:name=".service.PlayService"

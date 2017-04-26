@@ -7,13 +7,15 @@ package io.nya.powerlyrics.lyric;
 public class LyricEntry implements Comparable {
     public Long timestamp;
     public String lyric;
+    public String tLyric;
     public Long duration;
 
     public LyricEntry() {
     }
-    public LyricEntry(Long timestamp, String lyric) {
+    public LyricEntry(Long timestamp, String lyric, String tLyric) {
         this.timestamp = timestamp;
         this.lyric = lyric;
+        this.tLyric = tLyric;
     }
 
     @Override

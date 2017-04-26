@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * A class represent for entire lyric file including the id tags
@@ -36,6 +37,10 @@ public class Lyric implements Iterable<LyricEntry> {
 
     public String getTag(String key) {
         return idTags.get(key);
+    }
+
+    public HashMap<String, String> getIdTags() {
+        return this.idTags;
     }
 
     public void add(LyricEntry entry) {

@@ -13,6 +13,7 @@ import android.util.TypedValue;
 import android.view.View;
 import android.widget.Scroller;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 import io.nya.powerlyrics.R;
@@ -39,10 +40,12 @@ public class LyricView extends View {
     private int mMiddleY = 0;
     private boolean hasInit = false;
 
+    private float mItemMargin;
+
     Lyric mLyric;
 
-    ArrayList<StaticLayout> mLayoutList;
-    ArrayList<StaticLayout> mHighlightLayoutList;
+    ArrayList<ArrayList<StaticLayout>> mLayoutList;
+    ArrayList<ArrayList<StaticLayout>> mHighlightLayoutList;
 
     /**
      * the duration of current music
@@ -70,7 +73,8 @@ public class LyricView extends View {
         mDefaultPaint = new TextPaint();
         mHighlighPaint = new TextPaint();
 
-        int defaultTextSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 24, context.getResources().getDisplayMetrics());
+        int defaultTextSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 20, context.getResources().getDisplayMetrics());
+        mItemMargin = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 20, context.getResources().getDisplayMetrics());
 
         if(attrs != null) {
             TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.LyricView, 0, 0);
@@ -151,14 +155,18 @@ public class LyricView extends View {
             direction = "down";
         } else {
             startPos = position;
-            endPos = mCurrentPosition;
+            endPos = currentPosition;
             direction = "up";
         }
         int delta = 0;
         for (int i = startPos; i < endPos; i++) {
-            StaticLayout layout = mLayoutList.get(i);
-            delta += layout.getHeight();
+            for (StaticLayout layout : mLayoutList.get(i)) {
+                delta += layout.getHeight();
+            }
+            delta += mItemMargin;
         }
+        Log.d(TAG, "position: " + position + ", direction: " + direction + ", endPos" + endPos);
+
         mCurrentPosition = position;
         if (mSmoothScrollbarEnabled == null) {
             mSmoothScrollbarEnabled = new SmoothScrollRunnable();
@@ -178,17 +186,24 @@ public class LyricView extends View {
         int childLeft = getPaddingLeft();
         if (mLyric != null) {
             for(int i = 0; i < mLyric.size(); i++) {
-                StaticLayout layout;
                 if (i == mCurrentPosition) {
-                    layout = mHighlightLayoutList.get(i);
+                    for (StaticLayout layout: mHighlightLayoutList.get(i)) {
+                        canvas.save();
+                        canvas.translate(childLeft, top);
+                        layout.draw(canvas);
+                        canvas.restore();
+                        top += layout.getHeight();
+                    }
                 } else {
-                    layout = mLayoutList.get(i);
+                    for (StaticLayout layout: mLayoutList.get(i)) {
+                        canvas.save();
+                        canvas.translate(childLeft, top);
+                        layout.draw(canvas);
+                        canvas.restore();
+                        top += layout.getHeight();
+                    }
                 }
-                canvas.save();
-                canvas.translate(childLeft, top);
-                layout.draw(canvas);
-                canvas.restore();
-                top += layout.getHeight();
+                top += mItemMargin;
             }
         }
     }
@@ -202,8 +217,18 @@ public class LyricView extends View {
             mLayoutList = new ArrayList<>();
             mHighlightLayoutList = new ArrayList<>();
             for (LyricEntry entry: mLyric) {
-                mLayoutList.add(new StaticLayout(entry.lyric, mDefaultPaint, containerWidth, StaticLayout.Alignment.ALIGN_CENTER, 1f, 1.5f, true));
-                mHighlightLayoutList.add(new StaticLayout(entry.lyric, mHighlighPaint, containerWidth, StaticLayout.Alignment.ALIGN_CENTER, 1f, 1.5f, true));
+                ArrayList<StaticLayout> innerList = new ArrayList<>();
+                ArrayList<StaticLayout> innerHighlightList = new ArrayList<>();
+                if (entry.lyric != null) {
+                    innerList.add(new StaticLayout(entry.lyric, mDefaultPaint, containerWidth, StaticLayout.Alignment.ALIGN_CENTER, 1f, 1.5f, true));
+                    innerHighlightList.add(new StaticLayout(entry.lyric, mHighlighPaint, containerWidth, StaticLayout.Alignment.ALIGN_CENTER, 1f, 1.5f, true));
+                }
+                if (entry.tLyric != null) {
+                    innerList.add(new StaticLayout(entry.tLyric, mDefaultPaint, containerWidth, StaticLayout.Alignment.ALIGN_CENTER, 1f, 1.5f, true));
+                    innerHighlightList.add(new StaticLayout(entry.tLyric, mHighlighPaint, containerWidth, StaticLayout.Alignment.ALIGN_CENTER, 1f, 1.5f, true));
+                }
+                mLayoutList.add(innerList);
+                mHighlightLayoutList.add(innerHighlightList);
             }
             hasInit = true;
         }

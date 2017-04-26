@@ -18,7 +18,7 @@ import java.io.InterruptedIOException;
 import java.util.concurrent.Callable;
 
 import io.nya.powerlyrics.LyricApplication;
-import io.nya.powerlyrics.LyricChooserActivy;
+import io.nya.powerlyrics.LyricChooserActivity;
 import io.nya.powerlyrics.LyricsActivity;
 import io.nya.powerlyrics.R;
 import io.nya.powerlyrics.model.LyricResult;
@@ -180,7 +180,7 @@ public class PlayService extends Service {
             resultIntent.setClass(this, LyricsActivity.class);
         } else {
             resultIntent.setAction(ACTION_LYRIC_NOT_FOUND);
-            resultIntent.setClass(this, LyricChooserActivy.class);
+            resultIntent.setClass(this, LyricChooserActivity.class);
             // put mCurrentTrack to bundle
 //            resultIntent.putExtra(PowerampAPI.TRACK, mCurrentTrack);
         }
@@ -210,17 +210,18 @@ public class PlayService extends Service {
         }
 
         for (SearchResult.Song song : songs) {
-            if (song.album != null && song.album.name != null && song.album.name.equals(mCurrentTrack.album)) {
-                sourceSongId = song.id;
-                break;
-            }
-            if (song.artists != null) {
-                for (SearchResult.Artist artist : song.artists) {
-                    if (artist.name != null && artist.name.equals(mCurrentTrack.artist)) {
-                        sourceSongId = song.id;
-                        break;
+            if (song.name.equals(mCurrentTrack.title)) {
+                if (song.album != null && song.album.name != null && song.album.name.equals(mCurrentTrack.album)) {
+                    return song.id;
+                }
+                if (song.artists != null) {
+                    for (SearchResult.Artist artist : song.artists) {
+                        if (artist.name != null && artist.name.equals(mCurrentTrack.artist)) {
+                            return song.id;
+                        }
                     }
                 }
+                return song.id;
             }
         }
         return sourceSongId;

@@ -6,6 +6,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -76,4 +79,34 @@ public class LyricParser {
         lyric.calculateEntryDuration();
         return lyric;
     }
+
+    public static Lyric parse(String content, String tContent) throws IOException {
+        Lyric lyric = new Lyric();
+        Lyric rawLyric = parse(content);
+        Lyric tLyric = parse(tContent);
+        HashMap<Long, LyricEntry> entryHashMap = new HashMap<>();
+        for (LyricEntry rawEntry: rawLyric) {
+            entryHashMap.put(rawEntry.timestamp, rawEntry);
+        }
+        for (LyricEntry tEntry: tLyric) {
+            if (entryHashMap.containsKey(tEntry.timestamp)) {
+                entryHashMap.get(tEntry.timestamp).tLyric = tEntry.lyric;
+            } else {
+                tEntry.tLyric = tEntry.lyric;
+                tEntry.lyric = null;
+                entryHashMap.put(tEntry.timestamp, tEntry);
+            }
+        }
+        for (LyricEntry entry: entryHashMap.values()) {
+            lyric.add(entry);
+        }
+        lyric.sort();
+        lyric.calculateEntryDuration();
+
+        for (Map.Entry<String, String> tag: rawLyric.getIdTags().entrySet()) {
+            lyric.addTag(tag.getKey(), tag.getValue());
+        }
+        return lyric;
+    }
+
 }

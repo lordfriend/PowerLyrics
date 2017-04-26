@@ -75,7 +75,7 @@ public class LyricsActivity extends Activity {
     };
 
     private void startTrackPosition() {
-        if (mCurrentTrack.lyric_status != Track.LyricStatus.FOUND) {
+        if (mCurrentTrack == null || mCurrentTrack.lyric_status != Track.LyricStatus.FOUND) {
             return;
         }
         // immediately sync the position of track.
@@ -87,9 +87,15 @@ public class LyricsActivity extends Activity {
         mHandler.removeCallbacks(mTickRunnable);
     }
 
-    private void setLyric(String lyricStr) {
+    private void setLyric(Track track) {
         try {
-            Lyric lyric = LyricParser.parse(lyricStr);
+            Lyric lyric;
+            if (track.tlyric == null) {
+                lyric = LyricParser.parse(track.lyric);
+            } else {
+                lyric = LyricParser.parse(track.lyric, track.tlyric);
+            }
+
             mLyricView.setLyric(lyric);
             mLyricView.setDuration(mCurrentTrack.dur);
         } catch (IOException e) {
@@ -160,12 +166,7 @@ public class LyricsActivity extends Activity {
                     case Track.LyricStatus.FOUND:
                         mMainContainer.setVisibility(View.VISIBLE);
                         mStateIndicator.setVisibility(View.INVISIBLE);
-                        Log.d(TAG, track.lyric);
-                        if (track.tlyric == null) {
-                            setLyric(track.lyric);
-                        } else {
-                            setLyric(track.tlyric);
-                        }
+                        setLyric(track);
                         startTrackPosition();
                         break;
                     case Track.LyricStatus.NOT_FOUND:

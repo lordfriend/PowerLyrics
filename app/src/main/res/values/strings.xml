@@ -6,4 +6,6 @@
     <string name="searching">Searching</string>
     <string name="search_error">Error occur in search</string>
     <string name="lrc_parse_error">Lyric parse error</string>
+    <string name="unknown_album">UnKnown Album</string>
+    <string name="unknown_artist">Unknown Artist</string>
 </resources>
