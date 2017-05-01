@@ -221,7 +221,7 @@ public class PlayService extends Service {
                         }
                     }
                 }
-                return song.id;
+                sourceSongId = song.id;
             }
         }
         return sourceSongId;
