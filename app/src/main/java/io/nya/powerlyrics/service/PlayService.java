@@ -263,6 +263,7 @@ public class PlayService extends Service {
                     public Track call() throws Exception {
                         // query the saved lyric from storage.
                         Track track = mLyricStorage.getTrackById(untouchedTrack.realId);
+                        Log.d(LOG_TAG, "track from db: " + track);
                         if (track == null) {
                             track = untouchedTrack.clone();
                             mLyricStorage.saveTrack(track);
