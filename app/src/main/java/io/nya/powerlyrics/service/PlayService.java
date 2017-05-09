@@ -63,6 +63,8 @@ public class PlayService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        mPlayStatus = new PlayStatus();
+        mPlayStatus.status = PowerampAPI.Status.PLAYING_ENDED;
         mLyricSource = new NeteaseCloud();
         mLyricStorage = new LyricStorage(DBHelper.getInstance(getApplicationContext()));
         mApp = (LyricApplication) getApplication();
@@ -300,6 +302,7 @@ public class PlayService extends Service {
                 .subscribeWith(new DisposableObserver<Track>() {
                     @Override
                     public void onNext(Track track) {
+                        Log.d(LOG_TAG, "lyric found: " + track);
                         if (mCurrentTrack.id == track.id) {
                             mCurrentTrack = track;
                             mApp.mCurrentTrackSubject.onNext(track);

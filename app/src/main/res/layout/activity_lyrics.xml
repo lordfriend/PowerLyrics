@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#002633"
+    android:background="#000000"
     tools:context="io.nya.powerlyrics.LyricsActivity">
 
     <!-- The primary full-screen view. This can be replaced with whatever view
@@ -33,7 +33,8 @@
             android:paddingBottom="15dip"
             android:marqueeRepeatLimit="marquee_forever"
             android:textSize="30sp"
-            android:textColor="#ffffff"/>
+            android:textColor="#ffffff"
+            android:background="#002633"/>
         <io.nya.powerlyrics.view.LyricView
             android:id="@+id/lyric_view"
             android:layout_width="match_parent"
