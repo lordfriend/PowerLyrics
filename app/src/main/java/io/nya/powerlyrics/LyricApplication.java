@@ -2,6 +2,8 @@ package io.nya.powerlyrics;
 
 import android.app.Application;
 
+import com.facebook.stetho.Stetho;
+
 import io.nya.powerlyrics.model.PlayStatus;
 import io.nya.powerlyrics.model.Track;
 import io.reactivex.subjects.BehaviorSubject;
@@ -23,5 +25,6 @@ public class LyricApplication extends Application {
         mCurrentLyricSubject = BehaviorSubject.create();
         mSearchStateSubject = BehaviorSubject.create();
         mStatusSubject = BehaviorSubject.create();
+        Stetho.initializeWithDefaults(this);
     }
 }

@@ -43,6 +43,6 @@ public class Track {
 
     @Override
     public String toString() {
-        return "#" + id + "(" + realId + ") \"" + title + "\" duration=" + dur + " album=\"" + album + "\" artist=\"" + artist + "\"";
+        return "#" + id + "(" + realId + ") \"" + title + "\" duration=" + dur + " album=\"" + album + "\" artist=\"" + artist + "\" lrc=" + (lyric != null) + " tlrc=" + (tlyric != null) + " lyric_status=" + lyric_status;
     }
 }

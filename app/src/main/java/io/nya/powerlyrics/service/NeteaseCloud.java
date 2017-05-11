@@ -1,5 +1,7 @@
 package io.nya.powerlyrics.service;
 
+import com.facebook.stetho.Stetho;
+import com.facebook.stetho.okhttp3.StethoInterceptor;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,7 +22,7 @@ import okhttp3.Response;
 
 public class NeteaseCloud {
 
-    private OkHttpClient client = new OkHttpClient();
+    private OkHttpClient client = new OkHttpClient.Builder().addInterceptor(new StethoInterceptor()).build();
 
     private static final MediaType FORM_TYPE = MediaType.parse("application/x-www-form-urlencoded");
 

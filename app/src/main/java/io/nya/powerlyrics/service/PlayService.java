@@ -307,9 +307,7 @@ public class PlayService extends Service {
                             mCurrentTrack = track;
                             mApp.mCurrentTrackSubject.onNext(track);
                         }
-                        if (mPlayStatus.status == PowerampAPI.Status.TRACK_PLAYING) {
-                            createNotification();
-                        }
+                        createNotification();
                     }
 
                     @Override
