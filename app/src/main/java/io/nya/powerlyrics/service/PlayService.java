@@ -312,7 +312,7 @@ public class PlayService extends Service {
 
                     @Override
                     public void onError(Throwable e) {
-                        Log.e(LOG_TAG, e.toString());
+                        e.printStackTrace();
                     }
 
                     @Override

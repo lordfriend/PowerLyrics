@@ -26,7 +26,8 @@ public class DBHelper extends SQLiteOpenHelper {
             TrackLyric.Entry.COLUMN_NAME_ARTIST + " TEXT, " +
             TrackLyric.Entry.COLUMN_NAME_DURATION + " INT, " +
             TrackLyric.Entry.COLUMN_NAME_LAST_PLAYED_TIME + " INT, " +
-            TrackLyric.Entry.COLUMN_NAME_POSITION + " INT)";
+            TrackLyric.Entry.COLUMN_NAME_POSITION + " INT, " +
+            "UNIQUE (" + TrackLyric.Entry.COLUMN_NAME_TRACK_REAL_ID + "))";
 
     /**
      * drop track_lyric table

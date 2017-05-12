@@ -22,7 +22,7 @@ import okhttp3.Response;
 
 public class NeteaseCloud {
 
-    private OkHttpClient client = new OkHttpClient.Builder().addInterceptor(new StethoInterceptor()).build();
+    private OkHttpClient client = new OkHttpClient.Builder().addNetworkInterceptor(new StethoInterceptor()).build();
 
     private static final MediaType FORM_TYPE = MediaType.parse("application/x-www-form-urlencoded");
 

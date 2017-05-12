@@ -21,7 +21,7 @@ public class LyricStorage {
         mDBHelper = helper;
     }
 
-    public Track getTrackById(long trackId) {
+    public Track getTrackById(long trackRealId) {
         SQLiteDatabase db = mDBHelper.getReadableDatabase();
         String [] projection = {
                 TrackLyric.Entry.COLUMN_NAME_TRACK_ID,
@@ -36,8 +36,8 @@ public class LyricStorage {
                 TrackLyric.Entry.COLUMN_NAME_LAST_PLAYED_TIME,
                 TrackLyric.Entry.COLUMN_NAME_POSITION
         };
-        String selection = TrackLyric.Entry.COLUMN_NAME_TRACK_ID + " = ?";
-        String[] selectionArgs = {String.valueOf(trackId)};
+        String selection = TrackLyric.Entry.COLUMN_NAME_TRACK_REAL_ID + " = ?";
+        String[] selectionArgs = {String.valueOf(trackRealId)};
         Cursor cursor = db.query(TrackLyric.Entry.TABLE_NAME, projection, selection, selectionArgs, null, null, null);
         if (cursor.getCount() == 0) {
             cursor.close();
@@ -76,7 +76,10 @@ public class LyricStorage {
         values.put(TrackLyric.Entry.COLUMN_NAME_POSITION,  track.pos);
         values.put(TrackLyric.Entry.COLUMN_NAME_LAST_PLAYED_TIME, System.currentTimeMillis());
 
-        db.insert(TrackLyric.Entry.TABLE_NAME, null, values);
+        long resultId = db.insertWithOnConflict(TrackLyric.Entry.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_IGNORE);
+        if (resultId == -1) {
+            db.update(TrackLyric.Entry.TABLE_NAME, values, TrackLyric.Entry.COLUMN_NAME_TRACK_REAL_ID + " = ?", new String[]{String.valueOf(track.realId)});
+        }
     }
 
     public Track getLastPlayed() {
